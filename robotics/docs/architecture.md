@@ -1,107 +1,107 @@
-# Architecture — Trois couches découplées
+# Architecture — Three decoupled layers
 
-## Le principe
+## The principle
 
-L'intelligence d'un robot d'assistance n'est pas monolithique. Elle se décompose en **trois couches** avec des contraintes temporelles et matérielles radicalement différentes. Mélanger ces couches — la tentation de tout mettre dans un seul script — est la première erreur.
+The intelligence of an assistive robot isn't monolithic. It splits into **three layers** with radically different timing and hardware constraints. Mixing these layers — the temptation to put everything into one script — is the first mistake.
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  COUCHE 1 — CERVEAU (cognition)                 │
-│  Cloud LLM, ~100ms, raisonnement                │
+│  LAYER 1 — BRAIN (cognition)                    │
+│  Cloud LLM, ~100ms, reasoning                   │
 │  GPT-4o, Claude, Groq Llama-4-Scout             │
 └──────────────────┬──────────────────────────────┘
-                   │ MonoCLI (mémoire persistante)
+                   │ MonoCLI (persistent memory)
                    ▼
 ┌─────────────────────────────────────────────────┐
-│  COUCHE 2 — PONT NEURAL (interface)             │
-│  ROS2 Jazzy, ~10ms, traduction intention→cmd    │
+│  LAYER 2 — NEURAL BRIDGE (interface)            │
+│  ROS2 Jazzy, ~10ms, intent → command            │
 │  SimAdapter / Go2Adapter                        │
 └──────────────────┬──────────────────────────────┘
                    │ UDP / DDS
                    ▼
 ┌─────────────────────────────────────────────────┐
-│  COUCHE 3 — MONDE (locomotion / perception)     │
-│  Isaac Sim 5.1 ↔ Go2/G1 réel, <1ms, contrôle    │
-│  Policy RL, capteurs, équilibre                 │
+│  LAYER 3 — WORLD (locomotion / perception)      │
+│  Isaac Sim 5.1 ↔ real Go2/G1, <1ms, control     │
+│  RL policy, sensors, balance                    │
 └─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Couche 1 — Le cerveau (cognition + empathie)
+## Layer 1 — The brain (cognition + empathy)
 
-**Rôle :** raisonner, planifier, dialoguer, mémoriser.
+**Role:** reason, plan, dialogue, remember.
 
-**Outils :**
-- **GPT-4o** pour la vision (description scène, détection humain, identification).
-- **Claude** pour le raisonnement long et la planification de mission.
-- **Groq Llama-4-Scout** pour les requêtes ultra-rapides (~0.34s, 187 tok/s) quand la latence prime.
-- **MonoCLI** — moteur propriétaire de mémoire persistante structurée. Le robot se souvient des interactions, des préférences, des incidents.
+**Tools:**
+- **GPT-4o** for vision (scene description, human detection, identification).
+- **Claude** for long-form reasoning and mission planning.
+- **Groq Llama-4-Scout** for ultra-fast queries (~0.34s, 187 tok/s) when latency dominates.
+- **MonoCLI** — proprietary engine for structured persistent memory. The robot remembers interactions, preferences, incidents.
 
-**Latence acceptable :** 100ms à plusieurs secondes selon la requête. Le cerveau ne doit jamais bloquer la couche 3.
-
----
-
-## Couche 2 — Le pont neural (interface)
-
-**Rôle :** traduire une intention cognitive ("approche-toi de la personne et dis bonjour") en commandes robotiques (Twist, Pose).
-
-**Outils :**
-- **ROS2 Jazzy** — standard de l'industrie, sur Ubuntu 24.04.
-- **SimAdapter / Go2Adapter** — abstraction qui permet de basculer entre simulation et réel sans changer le cerveau.
-- **API contract** — 7 commandes atomiques (`sense`, `move`, `turn`, `stand`, `goto`, `look`, `reset`).
-
-**Latence cible :** 10ms. Le pont ne fait pas de RL, pas de calcul lourd — juste de la traduction et de l'orchestration.
+**Acceptable latency:** 100ms to several seconds depending on the request. The brain must never block Layer 3.
 
 ---
 
-## Couche 3 — Le monde (locomotion + perception)
+## Layer 2 — The neural bridge (interface)
 
-**Rôle :** maintenir l'équilibre, exécuter les commandes de vélocité, percevoir l'environnement immédiat.
+**Role:** translate cognitive intent ("approach the person and say hello") into robotic commands (Twist, Pose).
 
-**Outils :**
-- **Isaac Sim 5.1** + **Isaac Lab 2.3.2** pour le jumeau numérique.
-- **Policies RL** : `rough_model_7850.pt` (Go2, MLP [512,256,128], obs 235), GR00T N1.7 (G1).
-- **Caméras embarquées** Go2 (640x480 @ 2.5 Hz) pour le VLM.
-- **PID software** par-dessus la policy pour corriger le drift de yaw.
+**Tools:**
+- **ROS2 Jazzy** — industry standard, on Ubuntu 24.04.
+- **SimAdapter / Go2Adapter** — abstraction that lets us swap simulation and real hardware without changing the brain.
+- **API contract** — 7 atomic commands (`sense`, `move`, `turn`, `stand`, `goto`, `look`, `reset`).
 
-**Latence absolue :** <10ms. Aucune dépendance cloud à ce niveau — le robot doit pouvoir tomber en panne d'internet sans tomber au sol.
-
----
-
-## Le cockpit Apple Vision Pro
-
-Au-dessus des trois couches, un **cockpit en réalité mixte** sur Apple Vision Pro permet :
-- de visualiser les "pensées" de l'IA (intention de trajectoire, classification VLM) superposées dans l'espace.
-- de corriger le comportement du robot par démonstration (apprentissage par imitation / VLA).
-- d'agir comme tableau de bord clinique pour le personnel soignant.
-
-TDD complète : `RoboticProgramAI/docs/TDD_VISION_PRO_COCKPIT_v2.md`.
+**Latency target:** 10ms. The bridge does no RL, no heavy compute — only translation and orchestration.
 
 ---
 
-## Communication inter-agents (la ferme)
+## Layer 3 — The world (locomotion + perception)
 
-Le développement repose sur une **ferme d'agents** (Claude Code) :
-- **STRAT** : stratégie, validation, coordination.
-- **DEV** : implémentation, debug.
-- **SPARK** : gestion du DGX Spark (sim, policies).
-- **NESTOR** : infrastructure, portail, monitoring.
-- **NUAGE SUPRÊME** : meta-stratège.
+**Role:** maintain balance, execute velocity commands, perceive the immediate environment.
 
-Communication via **tmux** (intra-projet) et **API Kanban** (inter-projet, source de vérité).
+**Tools:**
+- **Isaac Sim 5.1** + **Isaac Lab 2.3.2** for the digital twin.
+- **RL policies**: `rough_model_7850.pt` (Go2, MLP [512,256,128], 235-dim obs), GR00T N1.7 (G1).
+- **Embedded Go2 cameras** (640x480 @ 2.5 Hz) feeding the VLM.
+- **Software PID** layered on top of the policy to correct yaw drift.
 
-Cette structure est documentée dans le **système ICSD** (Inferred Context Semantic Density) — voir [methodology.md](methodology.md).
+**Hard latency cap:** <10ms. Zero cloud dependency at this layer — the robot must be able to lose its internet connection without falling on the ground.
 
 ---
 
-## Pourquoi cette séparation est non-négociable
+## The Apple Vision Pro cockpit <a id="cockpit"></a>
 
-J'ai testé l'inverse. Mettre la décision LLM directement dans la boucle de contrôle 25Hz : ça marche en démo, ça casse en production.
+Above the three layers, a **mixed-reality cockpit** on Apple Vision Pro enables:
+- visualizing the AI's "thoughts" (trajectory intent, VLM classification) overlaid on physical space.
+- correcting robot behavior through demonstration (imitation learning / VLA).
+- acting as a clinical dashboard for care personnel.
 
-Trois symptômes typiques d'un mélange de couches :
-1. **La latence cloud bloque l'équilibre du robot.** Une requête GPT-4o de 3s pendant que le robot est en mouvement = chute.
-2. **L'erreur cognitive devient erreur physique.** Une mauvaise classification VLM → mauvaise commande → robot dans le mur.
-3. **L'itération devient impossible.** Modifier un prompt force à retester toute la stack matérielle.
+Full TDD: `RoboticProgramAI/docs/TDD_VISION_PRO_COCKPIT_v2.md`.
 
-La séparation en trois couches **isole les modes de défaillance** et permet d'itérer indépendamment.
+---
+
+## Inter-agent communication (the farm)
+
+Development relies on a **farm of agents** (Claude Code):
+- **STRAT**: strategy, validation, coordination.
+- **DEV**: implementation, debugging.
+- **SPARK**: DGX Spark management (sim, policies).
+- **NESTOR**: infrastructure, portal, monitoring.
+- **NUAGE SUPRÊME** (Supreme Cloud — meta-strategist).
+
+Communication via **tmux** (intra-project) and the **Kanban API** (inter-project, source of truth).
+
+This structure is documented in the **ICSD system** (Inferred Context Semantic Density) — see [methodology.md](methodology.md).
+
+---
+
+## Why this separation isn't optional
+
+I tested the opposite. Putting an LLM decision directly inside a 25Hz control loop: works in demos, breaks in production.
+
+Three typical symptoms of mixed layers:
+1. **Cloud latency blocks robot balance.** A 3-second GPT-4o request while the robot is moving = fall.
+2. **Cognitive errors become physical errors.** A wrong VLM classification → wrong command → robot in the wall.
+3. **Iteration becomes impossible.** Tweaking a prompt forces a full retest of the hardware stack.
+
+Three-layer separation **isolates failure modes** and lets each layer iterate independently.

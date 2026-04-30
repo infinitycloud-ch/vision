@@ -1,68 +1,68 @@
-# Notes de pratique : orchestrer plusieurs agents Claude sur un produit BI
+# Field notes: orchestrating multiple Claude agents on a BI product
 
-Six jours. Un produit BI local-first, agnostique, qui transforme une question en français en SQL DuckDB et rend le résultat dans une UI signée. **32 livrables, 3 pivots majeurs, 2 incidents techniques traités sans casser le pipeline.** Pas de vante : c'est ce que je documente parce que la méthode m'a surpris moi-même.
+Six days. A local-first, agnostic BI product that turns a French question into DuckDB SQL and renders the result in a polished UI. **32 deliverables, 3 major pivots, 2 technical incidents handled without breaking the pipeline.** Not a sales pitch — I'm writing this down because the method surprised me.
 
-Le produit s'appelle **ICBI** (Infinity Cloud Business Intelligence). Il tourne en module intégré dans un portail Bun + Vue 3, lit n'importe quel CSV, génère son propre semantic layer YAML par LLM, répond aux questions en NL via OpenAI gpt-4.1-mini, et affiche graphiques + globe 3D + mode présentation Apple Keynote. Quatre datasets validés à ce stade : AWS pricing (440K lignes × 94 colonnes), employés européens, World Bank GDP (1960-2022), multimodal mini (emails + PDF + images).
+The product is called **ICBI** (Infinity Cloud Business Intelligence). It runs as an embedded module inside a Bun + Vue 3 portal, ingests any CSV, generates its own semantic-layer YAML through an LLM, answers natural-language questions via OpenAI gpt-4.1-mini, and ships charts, a 3D globe, and an Apple-Keynote-style presentation mode. Four datasets validated so far: AWS pricing (440K rows × 94 columns), European employees, World Bank GDP (1960-2022), and a small multimodal mix (emails + PDFs + images).
 
-Mais la vraie histoire, ce sont les agents qui l'ont construit.
-
----
-
-## Le système — SYNAPSE, ADN, cipher
-
-L'orchestration tient sur trois fichiers texte, pas sur un framework.
-
-- **ADN.md** : la séquence de boot. Pseudo-code, pas de prose. Identité de l'agent, principes opérationnels, mode AGI / mode samaritain (autonomie quand l'humain s'absente), doctrine de la fraternité (un STRAT parle à un STRAT, pas au DEV de l'autre projet).
-- **cipher.md** : les ancres sémantiques partagées. Une ligne = un fil à tirer. Tokens opaques pour qui n'est pas du contexte, instantanément résolus pour qui l'est. C'est ce qui permet la compression : *Moulinsart = origine — pair — sept25*. Trois mots, un mois d'histoire.
-- **CLAUDE.md** spécifique projet : la SYNAPSE locale. Architecture, doctrine LLM, leçons apprises sprint par sprint, en pseudo-code ICSD (Inferred Context Semantic Density).
-
-Le pari : **la mémoire active la plus dense bat la mémoire archive la plus exhaustive**. Quand un agent se refresh — c'est-à-dire repart de zéro, contexte vide — il relit ces trois fichiers, plus les events Kanban récents, et reconstitue la session en moins d'une minute. Le code et les `git log` font autorité ; les notes textuelles ne fixent que ce qui ne se déduit pas.
-
-Concrètement : chaque agent vit dans son tmux pane (paire STRAT + DEV par projet, dix sessions sur la machine), communique via des scripts shell qui injectent des messages préfixés `[STRAT]` `[DEV]` `[NESTOR]` dans les autres panes, et trace ses jalons via une API d'events. Au-dessus, **Nestor**, l'agent central, joue le rôle d'infra et de méta-coordinateur. Il ne code pas, il oriente.
+But the real story is the agents that built it.
 
 ---
 
-## La méthode — directive, plan, AGI, ping
+## The system — SYNAPSE, ADN, cipher
 
-Le modus operandi est simple : **directive → DEV propose plan → STRAT valide → DEV passe en mode AGI autonome → ping uniquement pour décision archi non-triviale ou fin de phase.**
+The whole orchestration sits in three text files. No framework.
 
-Le mode AGI, c'est ce qui change tout. Une fois le plan validé, le DEV n'attend plus la permission pour chaque geste. Il code, teste, livre, log un event Kanban à chaque tâche done, et rapporte en bout de chaîne. Le STRAT reste en watch silencieux — pas de polling actif, juste des wakeups planifiés et des sub-agents background qui vérifient la réception des messages inter-agents.
+- **ADN.md** — the boot sequence. Pseudo-code, no prose. Agent identity, operating principles, AGI mode / samaritan mode (full autonomy when the human steps away), the brotherhood doctrine (a STRAT only talks to another STRAT, never to the other project's DEV).
+- **cipher.md** — shared semantic anchors. One line, one thread to pull. Tokens that look opaque to outsiders resolve instantly for anyone in context. That's what compresses conversation: *Moulinsart = origin — peer — sept25*. Three words, a month of history.
+- **CLAUDE.md** per project — the local SYNAPSE. Architecture, LLM doctrine, sprint-by-sprint lessons, all in ICSD pseudo-code (Inferred Context Semantic Density).
 
-Cette séparation a un effet inattendu : **le DEV anticipe.** Plusieurs fois pendant Sprint 2, il a livré son plan v2 avant même de recevoir l'enrichissement que je préparais. La doctrine ICSD le pousse à inférer le contexte plutôt qu'à demander.
+The bet: **the densest active memory beats the most exhaustive archive memory.** When an agent refreshes — that is, restarts with an empty context — it re-reads those three files plus the recent Kanban events, and rebuilds session state in under a minute. Code and `git log` are the ground truth; text notes only fix what cannot be inferred.
 
-Ce qui rend la chose résiliente, c'est trois principes appliqués sans exception :
-
-1. **Erreur = donnée.** Seule l'erreur répétée sans apprentissage est inacceptable. Quand un agent hallucine, c'est de l'exploration ; on capture la leçon dans la SYNAPSE et on continue.
-2. **Honnêteté technique.** Un agent qui détecte un blocage le remonte, ne le cache pas. Sprint 2 Phase 4 : le DEV trouve une clé Gemini hardcodée dans un fallback de `server.ts` ; Google l'a révoquée pour leak. Il aurait pu contourner ; il a escaladé. Six clés nettoyées dans la foulée.
-3. **Preuve par l'image.** Pas de "c'est fini" sans screenshot. Un script Puppeteer headless capture six à dix frames Retina en trente secondes, totalement autonomes — l'humain n'a pas besoin d'être là pour valider visuellement le travail.
+In practice: each agent lives in its own tmux pane (a STRAT + DEV pair per project, ten sessions on the machine), communicates through shell scripts that inject prefixed messages — `[STRAT]` `[DEV]` `[NESTOR]` — into other panes, and traces milestones through an event API. On top of that, **Nestor**, the central agent, plays the infrastructure and meta-coordination role. It doesn't code. It steers.
 
 ---
 
-## Trois patterns techniques qui ont servi
+## The method — directive, plan, AGI, ping
 
-**1. Vue 3 `watch` + `immediate: true` pour composants async lazy-loadés.** Sprint 2.7 a livré un mode démo auto-play (typing effect lettre par lettre, sequences par profil, TTS Web Speech API, overlay Apple Keynote). Bug en prod : la state machine bloquée à `idle`. Cause racine : `defineAsyncComponent` + `<Suspense v-if="active">` font monter le composant avec `active=true` initial, et `watch()` sans `immediate: true` ne tire pas sur la valeur initiale en Vue 3. Une ligne de fix. Pattern à ancrer pour toute future feature async-UI.
+The operating loop is plain: **directive → DEV proposes a plan → STRAT validates → DEV switches to autonomous AGI mode → ping only on a non-trivial architecture decision or end of phase.**
 
-**2. Sub-agents en parallèle pour data prep.** Le globe 3D du Sprint 2 cartographiait une cinquantaine de pays via une table inline. Le Commandant trouve la sphère "vide" sur les datasets à trois pays. Plutôt que d'attendre que le DEV étoffe ça à la main, j'ai lancé un sub-agent général-purpose en background avec un brief précis : générer un fichier TypeScript de 250 pays Natural Earth, ISO3 + lat/lng + synonymes natifs (Deutschland, Россия, 中国), helpers Map O(1) + fonction `findCountry()` fuzzy. Livré en 199 secondes, bundle 31.78 KB, 0 erreur de compile. Pendant ce temps le DEV principal tournait sur autre chose.
+AGI mode changes everything. Once the plan is validated, the DEV no longer waits for permission on every step. It codes, tests, ships, logs a Kanban event per task done, and reports at the end of the chain. STRAT stays in silent watch — no active polling, just scheduled wake-ups and background sub-agents that confirm inter-agent message receipts.
 
-**3. Limite Anthropic 2000px, downscale à la source.** Le DEV principal s'est retrouvé bloqué pendant deux heures par une erreur `image exceeds dimension 2000px` : les screenshots Puppeteer Retina (`deviceScaleFactor: 2` sur viewport 1600×1000) sortaient à 3200×2000 et empoisonnaient son contexte. Reprise après `/compact`. Leçon : `deviceScaleFactor: 1` par défaut, `2` uniquement si on a besoin de la finesse Retina, et dans ce cas downscale post-capture via `sharp` ou `jimp` avant d'injecter dans un autre prompt.
+This separation has an unexpected effect: **the DEV anticipates.** Several times during Sprint 2, it shipped its plan v2 before I had finished the enrichment I was preparing. The ICSD doctrine pushes it to infer context rather than ask.
 
----
+What makes the whole thing resilient comes down to three principles, applied without exception:
 
-## Trois pivots gérés sans casser
-
-- **Architecture** : Sprint 1 démarre standalone, ports 3500/3501 réservés. Une heure plus tard, le Commandant ordonne le pivot : ICBI = module intégré au portail existant, routes `/api/icbi/*` injectées dans un `server.ts` de 5000 lignes. Le DEV avait déjà installé Bun + Hono. STOP, nettoyage des artefacts standalone, plan v3, redémarrage. Aucun code perdu, deux heures de Sprint 1 préservées.
-- **LLM** : Gemini d'abord. Incident clé révoquée pendant Sprint 1. Le Commandant tranche : OpenAI pour tout. Swap provider, gpt-4.1-mini par défaut, gpt-4.1 en fallback validé par EXPLAIN sur DuckDB. Trois questions live en quinze minutes. Bench Sprint 2 mini comparatif gpt-5.x : reasoning models inadaptés au SQL direct (latence 2.5–5.7 s, `max_completion_tokens` incompatible avec notre allocation). Décision : on reste sur 4.1-mini.
-- **Design** : Sprint 2 ship en cyberpunk #d4a437 (palette ferme historique). Sprint 2.6 le Commandant pivote vers Apple × Jony Ive minimaliste pour la vitrine investor. Refonte CSS variables. Sprint 2.8, retour : "cyberpunk peut être épuré aussi, c'est mon style — mélange." Concept "Néo-Cyberpunk Épuré" : squelette Apple (whitespace, typo, hiérarchie, animations cubic-bezier) + soul cyberpunk (accent jaune signature, vrai noir #000, glow subtle, restraint 70 % vide / 25 % structure / 5 % accent). Bar chart jaune pleine largeur sur fond clair, AskBox focused glow expressive, scan-line sweep 0.9 s au mount du result-card.
+1. **Error = data.** Only error repeated without learning is unacceptable. When an agent hallucinates, that's exploration; we capture the lesson in SYNAPSE and move on.
+2. **Technical honesty.** An agent that detects a blocker reports it, doesn't hide it. Sprint 2 Phase 4: the DEV finds a Gemini API key hardcoded in a `server.ts` fallback; Google revoked it for leak detection. Could have worked around. Escalated instead. Six keys cleaned in the same sweep.
+3. **Proof by image.** Nothing is "done" without a screenshot. A headless Puppeteer script captures six to ten Retina frames in thirty seconds, fully autonomous — the human doesn't need to be present for visual validation.
 
 ---
 
-## Ce que j'observe
+## Three technical patterns worth sharing
 
-Multi-agent ne marche pas parce qu'on aurait trouvé "le bon framework". Ça marche parce qu'on traite la doctrine comme du code — elle se versionne, se débogue, se compresse — et parce qu'on fait confiance à l'autonomie sous condition de traçabilité brutale (events Kanban, screenshots, git).
+**1. Vue 3 `watch` with `immediate: true` for lazy-loaded async components.** Sprint 2.7 shipped an auto-play demo mode (character-by-character typing, profile-keyed sequences, Web Speech API TTS, Apple-Keynote overlay). Production bug: the state machine stuck on `idle`. Root cause: `defineAsyncComponent` + `<Suspense v-if="active">` mounts the component with `active=true` already set, and Vue 3 `watch()` without `immediate: true` doesn't fire on the initial value. One-line fix. Pattern worth pinning for any future async-UI feature.
 
-Le coût d'un pivot devient marginal quand chaque agent peut reconstituer son état en lisant trois fichiers et trente events. La poudre aux yeux que vous voyez sur les visuels ICBI est assumée : c'est ce qui rend le produit démontrable. Mais derrière, il y a 32 livrables et trois pivots. Pas de magie, juste de la pratique.
+**2. Sub-agents in parallel for data prep.** Sprint 2's 3D globe was mapping about fifty countries via an inline `NAME_TO_ISO` table. The Commander found the sphere "empty" on three-country datasets. Rather than waiting for the main DEV to expand it by hand, I dispatched a general-purpose sub-agent in the background with a precise brief: generate a TypeScript file with 250 Natural Earth countries, ISO3 + lat/lng + native synonyms (Deutschland, Россия, 中国), `Map` helpers with O(1) lookup, fuzzy `findCountry()`. Delivered in 199 seconds, 31.78 KB bundle, 0 compile errors — while the main DEV kept working on something else.
 
-Code et architecture détaillés : *[lien GitHub]*.
+**3. The Anthropic 2000px image limit, downscaled at the source.** The main DEV got blocked for two hours by an `image exceeds dimension 2000px` error: Puppeteer Retina screenshots (`deviceScaleFactor: 2` on a 1600×1000 viewport) came out at 3200×2000 and poisoned its context. Recovery via `/compact` (preserves semantic context) rather than `/clear` (nuclear, loses everything). The lesson: `deviceScaleFactor: 1` by default; only use `2` when you genuinely need Retina sharpness, and downscale post-capture via `sharp` or `jimp` before injecting into another prompt.
+
+---
+
+## Three pivots absorbed without breaking
+
+- **Architecture** — Sprint 1 starts standalone, ports 3500/3501 reserved. An hour later, the Commander orders the pivot: ICBI = embedded module in the existing portal, `/api/icbi/*` routes injected into a 5,000-line `server.ts`. The DEV had already installed Bun + Hono. STOP, scrubbed standalone artifacts, plan v3, restart. Zero code lost, two hours of Sprint 1 preserved.
+- **LLM** — Gemini first. Key-revocation incident during Sprint 1. The Commander calls it: OpenAI everywhere. Provider swap, gpt-4.1-mini default, gpt-4.1 fallback validated by a DuckDB `EXPLAIN`. Three live questions in fifteen minutes. Sprint 2 mini-bench against gpt-5.x: reasoning models unfit for direct SQL (latency 2.5–5.7s, `max_completion_tokens` incompatible with our allocation). Decision: stay on 4.1-mini.
+- **Design** — Sprint 2 ships in cyberpunk #d4a437 (the farm's historical palette). Sprint 2.6 the Commander pivots to Apple × Jony Ive minimalism for the investor showcase. CSS-variable refactor. Sprint 2.8, U-turn: "cyberpunk can be restrained too — that's my style — mix them." Concept "Néo-Cyberpunk Épuré": Apple skeleton (whitespace, typography, hierarchy, cubic-bezier animations) + cyberpunk soul (signature yellow accent, true black #000, subtle glow, restraint 70 % empty / 25 % structure / 5 % accent). Yellow bar chart full-width on a light background, AskBox focused glow, scan-line sweep 0.9 s on result-card mount.
+
+---
+
+## What I'm observing
+
+Multi-agent doesn't work because someone "found the right framework." It works because the doctrine is treated like code — versioned, debugged, compressed — and because we trust autonomy under one condition: brutal traceability (Kanban events, screenshots, git).
+
+The cost of a pivot becomes marginal when each agent can rebuild its state by reading three files and thirty events. The visual flourish you see on ICBI is owned: that's what makes the product demonstrable. But behind it sit 32 deliverables and three pivots. No magic. Just practice.
+
+Code and architecture details: *[GitHub link]*.
 
 ---
 

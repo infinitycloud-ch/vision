@@ -1,86 +1,86 @@
-# Hardware — Pourquoi GB10 Blackwell
+# Hardware — Why GB10 Blackwell
 
-## La machine
+## The machine
 
-| Spec | Valeur |
+| Spec | Value |
 |---|---|
-| **Modèle** | NVIDIA DGX Spark |
+| **Model** | NVIDIA DGX Spark |
 | **GPU** | GB10 Blackwell |
-| **Mémoire unifiée** | 128 GB |
-| **Architecture CPU** | aarch64 (ARM) |
+| **Unified memory** | 128 GB |
+| **CPU architecture** | aarch64 (ARM) |
 | **TDP** | ~100 W |
 | **OS** | Ubuntu 24.04 |
 | **CUDA** | 13.0 |
 | **PyTorch** | 2.9.1+cu130 |
-| **Python** | 3.11 (env Isaac) / 3.12 (système) |
-| **Réseau** | Ethernet 10 Gbit |
-| **IP locale** | <LAN_IP_SPARK> |
+| **Python** | 3.11 (Isaac env) / 3.12 (system) |
+| **Network** | 10 Gbit Ethernet |
+| **Local IP** | <LAN_IP_SPARK> |
 
 ---
 
-## Pourquoi GB10 et pas H100
+## Why GB10 and not an H100
 
-Question légitime : pourquoi pas un cluster H100 cloud, ou un DGX H100 sur site ?
+Fair question: why not a cloud H100 cluster, or an on-prem DGX H100?
 
-**Économie d'itération.** Un H100 cloud à l'usage coûte ~3 USD/h en stable, plus en pic. Un cycle d'entraînement RL utile (1500 itérations PPO sur Go2) tourne ~6h. À cinq cycles par semaine, c'est 360 USD/mois minimum, sans compter le stockage, la bande passante, et le temps perdu à provisionner.
+**Iteration economics.** A pay-as-you-go cloud H100 sits around USD 3/hour at steady state, more during peaks. A useful RL training cycle (1500 PPO iterations on Go2) takes ~6 hours. Five cycles a week = USD 360/month minimum, before storage, bandwidth, and the friction of provisioning every time.
 
-Un DGX Spark : achat unique, électricité négligeable, **disponible 24/7 sans frais marginaux**. L'itération devient gratuite. C'est ça qui change la donne pour un développeur indépendant — pas la performance brute.
+A DGX Spark is a one-off purchase, negligible electricity, **available 24/7 with zero marginal cost**. Iteration becomes free. That's what changes the game for an independent developer — not raw throughput.
 
-**Suffisance technique.** GB10 a la VRAM (128 GB unifiée) pour Isaac Sim 5.1 + Isaac Lab 2.3 + plusieurs policies en parallèle. Pour des entraînements à très grande échelle (training fondamentaux GR00T-class), il faut effectivement un cluster. Mais pour **fine-tuner, déployer, mesurer, itérer** sur des policies existantes — le GB10 est largement suffisant.
+**Technical sufficiency.** The GB10 has the VRAM (128 GB unified) for Isaac Sim 5.1 + Isaac Lab 2.3 + several policies running in parallel. For very large training runs (foundation-model-scale GR00T training), you genuinely need a cluster. But for **fine-tuning, deploying, measuring, iterating** on existing policies — the GB10 is more than enough.
 
-**Mobilité.** 100W, refroidissement passif, format compact. Le robot peut être amené à la machine, ou la machine au robot. Aucun lien physique avec un datacenter.
-
----
-
-## Pourquoi pas un Jetson
-
-Le Jetson Orin Nano est l'option naturelle pour de l'embarqué temps réel. Il en a sa place dans le système final (futur Compagnon).
-
-Pour le **développement** — entraînement, simulation, benchmarking — le Jetson est trop limité. Pas assez de VRAM pour Isaac Sim, throughput insuffisant pour itérer plusieurs policies, écosystème Python plus contraint.
-
-Le couple **GB10 (dev) ↔ Jetson (deploy)** est cohérent : tout ce qui est entraîné sur GB10 est exporté en JIT/ONNX, déployable ensuite sur Jetson embarqué. Pour l'instant, le Go2 est piloté par un iPhone embarqué (cf. article principal Nuage), pas un Jetson — décision pragmatique liée aux capacités natives iOS (LiDAR, ARKit, Vision, microphones).
+**Mobility.** 100W, passive cooling, compact form factor. The robot can come to the machine, or the machine to the robot. No physical tether to a datacenter.
 
 ---
 
-## Surprises aarch64
+## Why not a Jetson
 
-L'écosystème ML aarch64 est mature mais pas universel. Quelques découvertes :
+The Jetson Orin Nano is the natural choice for real-time embedded work, and it has a place in the production stack (future Companion).
 
-- **PyTorch CUDA aarch64** : disponible (`torch 2.9.1+cu130`). Aucun problème.
-- **NVIDIA WebRTC** : pas de package ARM officiel pour LiveStream. Bypass via web viewer custom.
-- **Nemotron VLM 12B** : bloqué par `mamba-ssm` non compilé pour aarch64 — fallback sur Groq Llama-4-Scout puis migration GPT-4o.
-- **Isaac Sim 5.x** : ARM supporté depuis la 5.0 — **5.1** est la première version pleinement opérationnelle sur ce hardware.
+For **development** — training, simulation, benchmarking — the Jetson is too constrained. Not enough VRAM for Isaac Sim, insufficient throughput for iterating across multiple policies, a more limited Python ecosystem.
 
-À noter pour qui se lance : prévoir 1 à 2 jours de débogage de dépendances dans les premières semaines.
+The **GB10 (dev) ↔ Jetson (deploy)** pairing makes sense: anything trained on GB10 gets exported to JIT/ONNX, then ships to embedded Jetson. For now, the Go2 is piloted by an embedded iPhone (see the main Nuage article), not a Jetson — a pragmatic choice driven by iOS-native capabilities (LiDAR, ARKit, Vision, microphones).
 
 ---
 
-## Le hub Mac M3 Ultra
+## aarch64 surprises
 
-Le DGX Spark n'est pas seul. Un Mac M3 Ultra (<LAN_IP_HUB>) sert de hub principal :
-- Portail Panda (Kanban, API, monitoring) sur port 3010.
-- Orchestration multi-agents (sessions tmux).
-- Stockage des assets, documentation, logs centralisés.
-- Connexion ssh / scp vers Spark pour déploiement.
+The aarch64 ML ecosystem is mature but not universal. A few findings:
 
-Cette répartition CPU-puissant (Mac) + GPU-dédié (Spark) couvre l'essentiel sans cluster.
+- **PyTorch CUDA on aarch64**: available (`torch 2.9.1+cu130`). No issues.
+- **NVIDIA WebRTC**: no official ARM package for LiveStream. Worked around via a custom web viewer.
+- **Nemotron VLM 12B**: blocked because `mamba-ssm` isn't compiled for aarch64 — fell back to Groq Llama-4-Scout, then migrated to GPT-4o.
+- **Isaac Sim 5.x**: ARM supported since 5.0 — **5.1** is the first version that's fully operational on this hardware.
+
+Heads-up for anyone starting out: budget 1–2 days of dependency debugging in the first weeks.
 
 ---
 
-## Coût total
+## The Mac M3 Ultra hub
 
-À titre indicatif et sans dramatiser :
+The DGX Spark doesn't run alone. A Mac M3 Ultra (<LAN_IP_HUB>) acts as the main hub:
+- Panda Portal (Kanban, API, monitoring) on port 3010.
+- Multi-agent orchestration (tmux sessions).
+- Asset storage, documentation, centralized logs.
+- ssh/scp connection to Spark for deployment.
 
-| Poste | Ordre de grandeur |
+This split — CPU-strong (Mac) + GPU-dedicated (Spark) — covers the essentials without a cluster.
+
+---
+
+## Total cost
+
+For reference, no drama intended:
+
+| Item | Order of magnitude |
 |---|---|
-| DGX Spark | 4 000 CHF |
-| Mac M3 Ultra | 8 000 CHF |
-| Unitree Go2 (Edu) | 5 500 CHF |
-| Unitree G1 (Education Pro) | 16 000 CHF |
-| Apple Vision Pro | 4 000 CHF |
-| iPhone 16 Pro Max | 1 500 CHF |
-| **Total** | **~39 000 CHF** |
+| DGX Spark | CHF 4,000 |
+| Mac M3 Ultra | CHF 8,000 |
+| Unitree Go2 (Edu) | CHF 5,500 |
+| Unitree G1 (Education Pro) | CHF 16,000 |
+| Apple Vision Pro | CHF 4,000 |
+| iPhone 16 Pro Max | CHF 1,500 |
+| **Total** | **~CHF 39,000** |
 
-À comparer au coût d'un mois de salaire d'une équipe de 12 ingénieurs ML, ou au TCO annuel d'un cluster H100 dédié.
+Compare with one month's payroll for a twelve-engineer ML team, or the annual TCO of a dedicated H100 cluster.
 
-Ce n'est pas une compétition. C'est une démonstration que **le ticket d'entrée en robotique cognitive est tombé d'un ordre de grandeur** — et que ce changement va débloquer des projets que les grands acteurs n'auraient jamais financés.
+This isn't a competition. It's a demonstration that **the entry ticket to cognitive robotics has dropped by an order of magnitude** — and that this shift opens projects that large players have not been funding.

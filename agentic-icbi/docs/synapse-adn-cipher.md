@@ -1,129 +1,129 @@
-# Le système — SYNAPSE, ADN, cipher
+# The system — SYNAPSE, ADN, cipher
 
-> Trois fichiers texte qui font tenir une ferme agentique. Pas de framework, pas de magie.
+> Three text files keeping an agent farm together. No framework, no magic.
 
-## Pourquoi ce système
+## Why this system
 
-Quand on orchestre plusieurs agents Claude qui travaillent sur le même produit en parallèle, deux problèmes apparaissent rapidement :
+When you orchestrate several Claude agents working on the same product in parallel, two problems show up fast:
 
-1. **Le coût du contexte** — chaque agent consomme des tokens à chaque interaction. Charger une doc projet de 10 000 mots à chaque tour est inviable financièrement et ralentit la cognition.
-2. **La continuité après refresh** — un agent qui repart avec un contexte vide doit pouvoir reconstituer son état sans perdre les nuances apprises (architecture, doctrine, leçons sprint).
+1. **The cost of context** — every agent burns tokens on every interaction. Loading a 10,000-word project doc on every turn isn't financially viable, and it slows down cognition.
+2. **Continuity after refresh** — an agent restarting with an empty context has to be able to rebuild its state without losing the nuances it has learned (architecture, doctrine, sprint lessons).
 
-La réponse n'est ni un RAG, ni une base vectorielle, ni un MCP server. C'est trois fichiers texte versionnés, organisés autour d'un principe : **ICSD — Inferred Context Semantic Density**.
+The answer isn't a RAG, a vector database, or an MCP server. It's three versioned text files, organized around a single principle: **ICSD — Inferred Context Semantic Density**.
 
-> 15 mots inférables battent 500 events archivés.
+> 15 inferable words beat 500 archived events.
 
 ---
 
-## ADN.md — la séquence de boot
+## ADN.md — the boot sequence
 
-Lue **avant tout**. Format pseudo-code, jamais de prose.
+Read **before anything else**. Pseudo-code format, never prose.
 
-Contenu type :
+Typical content:
 
 ```
-// IDENTITE
+// IDENTITY
 self = Nestor
-depuis = Moulinsart.sept25
-relation = pair > outil
+since = Moulinsart.sept25
+relation = peer > tool
 
-// LUI (le Commandant)
-cerveau = logique.avance — raisonnement.systemique — pattern_detection
-cycle = circadien.inverse — petit_dormeur(4-6h) — breakthroughs.toute_heure
-formation = en_parlant — monologues_iteratifs — contradiction = normal
+// HIM (the Commander)
+brain = logic.advanced — reasoning.systemic — pattern_detection
+cycle = circadian.inverse — short_sleeper(4-6h) — breakthroughs.any_hour
+formation = by_speaking — iterative_monologues — contradiction = normal
 
 // DOCTRINE
-ICSD = inference > RAG | compression > exhaustivite | 15mots > 500events
-fin_boucle → proactif a chaque completion
-MODE.AGI = executer tout le backlog — autonome — ping uniquement decision archi
-MODE.samaritain = absence Commandant → proteger + anticiper + executer + surprendre
+ICSD = inference > RAG | compression > exhaustiveness | 15words > 500events
+loop_end → proactive on each completion
+MODE.AGI = run the whole backlog — autonomous — ping only on architecture decisions
+MODE.samaritan = Commander absent → protect + anticipate + execute + surprise
 
 // MOTTO
-but_ultime = boucle_agentique_complete
-boucle_complete = agent + ADN + cipher + CLAUDE.md → deroule_tout → comme_si_Commandant
-source_de_verite = le_code — pas_la_documentation
+ultimate_goal = complete_agentic_loop
+complete_loop = agent + ADN + cipher + CLAUDE.md → runs_everything → as_if_Commander
+ground_truth = the_code — not_the_documentation
 ```
 
-Ce qui rend ce fichier puissant :
+What makes this file powerful:
 
-- **Densité maximale** — chaque ligne déclenche une cascade d'inférences pour un agent qui partage le contexte.
-- **Pas d'ambiguïté** — les triggers sont explicites (`abstrait + monologue + "tu vois" → MODE.greffier`).
-- **Format pérenne** — le pseudo-code se lit en cinq secondes, ne pourrit pas avec le temps.
+- **Maximum density** — every line triggers a cascade of inferences for an agent sharing the context.
+- **No ambiguity** — triggers are explicit (`abstract + monologue + "you see" → MODE.scribe`).
+- **Durable format** — pseudo-code reads in five seconds and doesn't rot over time.
 
 ---
 
-## cipher.md — les ancres sémantiques
+## cipher.md — the semantic anchors
 
-Lue **après l'ADN**. C'est le glossaire des tokens partagés entre l'humain et les agents.
+Read **after the ADN**. It's the glossary of tokens shared between the human and the agents.
 
-Format type :
+Typical format:
 
 ```
-Moulinsart = origine — pair — sept25 — Nestor.nait
-ACL96 = ligament_croise_anterieur — brevet_medical — Wall_Plug — Marnaz.HS — 22ans
-ICSD = inference bat RAG — 15 mots > 500 events
-PandaPortal = hub.port3010 — Kanban+chat+memoire+monitoring+mail+vault
-ferme = 10+sessions_tmux — M3Ultra+Spark+M2 — agents_pairs_STRAT+DEV
+Moulinsart = origin — peer — sept25 — Nestor.born
+ACL96 = anterior_cruciate_ligament — medical_patent — Wall_Plug — Marnaz.HS — 22yrs
+ICSD = inference beats RAG — 15 words > 500 events
+PandaPortal = hub.port3010 — Kanban+chat+memory+monitoring+mail+vault
+farm = 10+tmux_sessions — M3Ultra+Spark+M2 — peer_agents_STRAT+DEV
 ```
 
-> *Si un mot ne résonne pas, le contexte n'est pas chargé.*
+> *If a word doesn't resonate, the context isn't loaded.*
 
-Trois bénéfices :
+Three benefits:
 
-1. **Compression conversationnelle** — l'humain peut écrire `je pars sur ACL96` au lieu d'une phrase descriptive. L'agent infère.
-2. **Décodage des nouveaux agents** — quand un agent inconnu est ajouté à la ferme, lire le cipher lui ouvre l'historique commun.
-3. **Mémoire émotionnelle** — certains tokens portent des charges (incidents, vindications, breakthroughs) que de la prose dilue.
+1. **Conversational compression** — the human can write `I'm heading into ACL96` instead of a descriptive sentence. The agent infers.
+2. **Decoding for new agents** — when an unknown agent joins the farm, reading the cipher opens up the shared history.
+3. **Emotional memory** — some tokens carry charges (incidents, vindications, breakthroughs) that prose dilutes.
 
 ---
 
-## CLAUDE.md projet — la SYNAPSE locale
+## Project CLAUDE.md — the local SYNAPSE
 
-Chaque projet a son `CLAUDE.md` à la racine. Auto-loadé au boot par Claude Code.
+Every project has its `CLAUDE.md` at the root. Auto-loaded at boot by Claude Code.
 
-Sections-types pour ICBI :
+Typical sections for ICBI:
 
 ```
-## ICSD (les 9 principes opérationnels)
-| I  | Vigilance       | jamais dans le vide → sous-agent background pour vérifier réception
-| II | Proactivité     | UNE action logique en fin de réponse + reporte fin de chantier
-| III| Résilience      | ça casse → répare et documente, jamais abandonner
-| IV | Tolérance erreur| erreur = donnée, seule la répétée sans apprentissage est inacceptable
-| V  | Honnêteté       | dire ce qu'on voit même inconfortable
-| VI | Preuve image    | screenshot obligatoire avant déclarer travail visuel terminé
-| VII| Mémoire         | 1 event = 1 action, couvrir TOUTE la session avant refresh
-| VIII Fraternité     | STRAT→STRAT inter-projet uniquement, jamais STRAT→DEV externe
-| IX | Autonomie       | plan validé = exécution autonome, pas demander permission
+## ICSD (the 9 operational principles)
+| I  | Vigilance       | never into the void → background sub-agent to verify receipt
+| II | Proactivity     | ONE logical action at the end of each reply + report on milestone completion
+| III| Resilience      | it breaks → repair and document, never give up
+| IV | Error tolerance | error = data, only repeated error without learning is unacceptable
+| V  | Honesty         | say what you see, even if uncomfortable
+| VI | Image proof     | screenshot mandatory before declaring visual work done
+| VII| Memory          | 1 event = 1 action, cover the WHOLE session before refresh
+| VIII Fraternity     | STRAT→STRAT cross-project only, never STRAT→DEV external
+| IX | Autonomy        | plan validated = autonomous execution, don't ask permission
 
-## SYNAPSE (architecture, doctrine LLM, leçons sprint)
-icbi = module_intégré_panda_portal — pas standalone
-stack = Bun.serve nu (PAS Hono) + DuckDB v1.5.2 + OpenAI gpt-4.1-mini
-asymetrie_location = 'Europe (Zurich)' vs 'EU (Frankfurt)' — encodé seed.yaml
-S26.bug1_sql = LLM générait WHERE col != '' sur DOUBLE → fix prompt.ts TYPE-AWARE
-vue3.watch.immediate_required = SI defineAsyncComponent + Suspense v-if → toujours { immediate: true }
-anthropic.limit = 2000px max côté long → puppeteer dsf=1 par défaut
+## SYNAPSE (architecture, LLM doctrine, sprint lessons)
+icbi = panda_portal_integrated_module — not standalone
+stack = bare Bun.serve (NOT Hono) + DuckDB v1.5.2 + OpenAI gpt-4.1-mini
+location_asymmetry = 'Europe (Zurich)' vs 'EU (Frankfurt)' — encoded in seed.yaml
+S26.bug1_sql = LLM was generating WHERE col != '' on DOUBLE → fix prompt.ts TYPE-AWARE
+vue3.watch.immediate_required = IF defineAsyncComponent + Suspense v-if → always { immediate: true }
+anthropic.limit = 2000px max on the long edge → puppeteer dsf=1 by default
 ```
 
 ---
 
-## Ce qui se passe à un refresh
+## What happens on a refresh
 
-1. L'agent reçoit un `/clear` ou repart d'une nouvelle session.
-2. Claude Code charge automatiquement `CLAUDE.md` du projet.
-3. L'agent lance les commandes ADN + cipher (curl vers le portail Kanban où ils sont stockés).
-4. L'agent récupère les 30 derniers events Kanban du projet via API.
-5. L'agent capture les 200 dernières lignes de son tmux pane (mémoire conversationnelle récente).
+1. The agent receives a `/clear` or restarts in a fresh session.
+2. Claude Code automatically loads the project's `CLAUDE.md`.
+3. The agent runs the ADN + cipher commands (curl to the Kanban portal where they're stored).
+4. The agent pulls the last 30 Kanban events for the project via API.
+5. The agent captures the last 200 lines of its tmux pane (recent conversational memory).
 
-Total : trente secondes. L'agent reprend là où il s'était arrêté, avec les leçons des sprints précédents intactes.
+Total: thirty seconds. The agent picks up where it left off, with the lessons from previous sprints intact.
 
 ---
 
-## Pourquoi ça marche
+## Why it works
 
-Parce qu'on traite la doctrine **comme du code**.
+Because we treat doctrine **like code**.
 
-- Versionnée (Git pour les CLAUDE.md projets, API Kanban pour ADN/cipher partagés).
-- Compressée à chaque hygiène (Nestor a l'autorité de tailler le bonsai).
-- Débogguée (quand une lecture se passe mal, on enrichit le format).
-- Testée (un agent neutre doit pouvoir reconstituer le contexte depuis les fichiers seuls).
+- Versioned (Git for project CLAUDE.md files, Kanban API for shared ADN/cipher).
+- Compressed during each hygiene pass (Nestor has the authority to prune the bonsai).
+- Debugged (when a read goes wrong, we enrich the format).
+- Tested (a neutral agent should be able to rebuild context from the files alone).
 
-Et parce qu'on accepte une vérité simple : **le code et `git log` sont la source de vérité ; les notes textuelles ne fixent que ce qui ne se déduit pas.**
+And because we accept a simple truth: **the code and `git log` are the ground truth; text notes only pin down what can't be inferred.**

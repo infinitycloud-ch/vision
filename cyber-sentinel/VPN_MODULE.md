@@ -1,92 +1,92 @@
-# Module VPN — WireGuard self-hosted
+# VPN module — self-hosted WireGuard
 
-> Sub-projet livre le 30 avril 2026. Preuve concrete d'execution rapide en mode agentique.
-
----
-
-## Contexte
-
-Tailscale a casse mon LAN (extension reseau persistante macOS qui prend le controle des routes meme apres deconnexion). J'avais besoin d'un acces VPN simple au LAN depuis l'iPhone. WireGuard self-hosted etait l'option propre : leger, kernel-supported, app officielle iOS, pas de dependance cloud.
-
-Plutot que d'utiliser un service tiers, j'ai voulu valider que ma pipeline d'execution agentique pouvait livrer un module complet en quelques heures. Le module VPN sert aussi a Sentinel a long terme (acces remote securise pour le dashboard de monitoring).
+> Sub-project shipped April 30, 2026. Concrete proof of fast execution in agentic mode.
 
 ---
 
-## Decoupage en 6 blocks
+## Context
 
-Plan agentique livre le matin du 30 avril.
+Tailscale broke my LAN (persistent macOS network extension that took control of routes even after disconnection). I needed simple VPN access to the LAN from my iPhone. Self-hosted WireGuard was the clean option: lightweight, kernel-supported, official iOS app, no cloud dependency.
 
-| Block | Scope | Statut |
+Rather than use a third-party service, I wanted to validate that my agentic execution pipeline could ship a complete module in a few hours. The VPN module also serves Sentinel long-term (secure remote access for the monitoring dashboard).
+
+---
+
+## Six-block breakdown
+
+Agentic plan delivered the morning of April 30.
+
+| Block | Scope | Status |
 |-------|-------|--------|
-| A | Setup serveur WireGuard sur le hub M3 | livre |
-| B | Configuration reseau (subnet 10.66.0.0/24, port 51820 UDP, split-tunnel) | livre |
-| C | Scripts CLI gestion clients (add/revoke/list) avec QR codes | livre |
-| D | Tests connectivite iPhone bout-en-bout | valide en prod |
-| E | API HTTPS Bun TypeScript pour gestion via NestorMobile | livre |
-| F | Documentation procedures + backup chiffre vers serveur Linux | livre |
+| A | WireGuard server setup on the M3 hub | shipped |
+| B | Network configuration (10.66.0.0/24 subnet, port 51820 UDP, split-tunnel) | shipped |
+| C | Client management CLI scripts (add/revoke/list) with QR codes | shipped |
+| D | iPhone end-to-end connectivity tests | validated in production |
+| E | Bun TypeScript HTTPS API for management via NestorMobile | shipped |
+| F | Procedures documentation + encrypted backup to Linux server | shipped |
 
 ---
 
-## Composants livres
+## Components delivered
 
-### 11 scripts CLI bash
+### 11 bash CLI scripts
 
-Tous idempotents, avec self-elevate pattern (`[[ $EUID -ne 0 ]] && exec sudo "$0" "$@"`), defense en profondeur (validation prealable, backup, rollback automatique en cas d'erreur).
+All idempotent, with self-elevate pattern (`[[ $EUID -ne 0 ]] && exec sudo "$0" "$@"`), defense in depth (preliminary validation, backup, automatic rollback on error).
 
-- `install-server.sh` / `uninstall-server.sh` — setup serveur WireGuard avec LaunchDaemon
-- `install-launchagent.sh` / `uninstall-launchagent.sh` — persistance API
-- `add-client.sh <name>` — genere cles + config + QR PNG
-- `revoke-client.sh <name>` — revocation avec archive forensics timestamped
-- `list-clients.sh` — etat clients + handshake + traffic RX/TX (mode `--json` pour API)
-- `diag-handshake.sh [name]` — diagnostic 6 sections couvrant les hypotheses de panne courantes
-- `apply-fix-path.sh` — reload propre du LaunchDaemon apres modif plist
-- `backup-config.sh` — backup chiffre quotidien vers serveur Linux (age + rsync)
-- `setup-sudoers.sh` — installe NOPASSWD scope minimal avec `visudo -c` + cross-check tree + rollback
-- `test-server-up.sh` — 11 health checks (interface UP, listener UDP, plist, IP forwarding, pf rules, etc.)
-- `restart-server.sh` — wrapper launchctl avec audit log et downtime estimate
+- `install-server.sh` / `uninstall-server.sh` — WireGuard server setup with LaunchDaemon
+- `install-launchagent.sh` / `uninstall-launchagent.sh` — API persistence
+- `add-client.sh <name>` — generate keys + config + QR PNG
+- `revoke-client.sh <name>` — revocation with timestamped forensics archive
+- `list-clients.sh` — client status + handshake + RX/TX traffic (`--json` mode for API)
+- `diag-handshake.sh [name]` — 6-section diagnostic covering common failure hypotheses
+- `apply-fix-path.sh` — clean LaunchDaemon reload after plist modification
+- `backup-config.sh` — daily encrypted backup to Linux server (age + rsync)
+- `setup-sudoers.sh` — installs minimal-scope NOPASSWD with `visudo -c` + tree cross-check + rollback
+- `test-server-up.sh` — 11 health checks (interface UP, UDP listener, plist, IP forwarding, pf rules, etc.)
+- `restart-server.sh` — launchctl wrapper with audit log and downtime estimate
 
-### API HTTPS Bun TypeScript (port 3403)
+### Bun TypeScript HTTPS API (port 3403)
 
-Stack : Bun + Hono. TLS self-signed (RSA 4096, SAN IP+DNS).
+Stack: Bun + Hono. Self-signed TLS (RSA 4096, SAN IP+DNS).
 
-5 endpoints :
+5 endpoints:
 
 | Endpoint | Description |
 |----------|-------------|
 | `GET /api/vpn/health` | Public, healthcheck |
-| `GET /api/vpn/status` | Etat serveur + stats clients agreges |
-| `GET /api/vpn/clients` | Liste detaillee clients actifs et revoques |
-| `GET /api/vpn/clients/:name` | Detail client + config + QR base64 + stats |
-| `POST /api/vpn/clients` | Creer client (regex stricte sur name + endpoint) |
-| `DELETE /api/vpn/clients/:name` | Revoque client |
-| `POST /api/vpn/server/restart` | Redemarrage serveur avec audit log |
+| `GET /api/vpn/status` | Server state + aggregated client stats |
+| `GET /api/vpn/clients` | Detailed list of active and revoked clients |
+| `GET /api/vpn/clients/:name` | Client detail + config + QR base64 + stats |
+| `POST /api/vpn/clients` | Create client (strict regex on name + endpoint) |
+| `DELETE /api/vpn/clients/:name` | Revoke client |
+| `POST /api/vpn/server/restart` | Server restart with audit log |
 
-Securite par couches :
+Defense by layers:
 
-- Bearer token avec comparaison constant-time (anti timing attack)
-- CORS strict 3 origines (`capacitor://localhost`, `https://localhost`, `http://hub-ip:3010`) — pas de wildcard
-- Validation regex stricte sur tous les inputs (anti path traversal, anti shell injection)
-- `Bun.spawn` avec args[] (jamais d'interpolation de string dans les commandes shell)
-- `ExecError` typed → 503 server_unreachable, 500 revoke_failed
-- Stderr leak limite a 200 chars dans la reponse client (pas de leak interne)
-- Audit log JSON-Lines append-only sur les mutations (chmod 600)
+- Bearer token with constant-time comparison (anti timing attack)
+- Strict CORS, 3 origins (`capacitor://localhost`, `https://localhost`, `http://hub-ip:3010`) — no wildcard
+- Strict regex validation on all inputs (anti path traversal, anti shell injection)
+- `Bun.spawn` with args[] (no string interpolation in shell commands)
+- Typed `ExecError` → 503 server_unreachable, 500 revoke_failed
+- Stderr leak limited to 200 chars in client response (no internal leak)
+- Append-only JSON-Lines audit log on mutations (chmod 600)
 
 ### Tests
 
-11 health checks serveur + 11 curl tests API (dont 4 tests d'attaque bloques) :
+11 server health checks + 11 API curl tests (including 4 blocked attack tests):
 
-| Attaque | Reponse |
-|---------|---------|
+| Attack | Response |
+|--------|---------|
 | GET `/clients/..%2Fetc%2Fpasswd` | 400 invalid_name |
 | POST `{endpoint:"; rm -rf /"}` | 400 invalid_endpoint |
-| POST nom existant | 409 conflict |
-| DELETE deja revoque | 404 not_found |
+| POST existing name | 409 conflict |
+| DELETE already revoked | 404 not_found |
 
-Validation persistance : `kill -9 PID API` → respawn automatique en 500ms (LaunchAgent `KeepAlive=true`).
+Persistence validation: `kill -9 PID API` → automatic respawn in 500ms (LaunchAgent `KeepAlive=true`).
 
-### Sudoers NOPASSWD scope minimal
+### Minimal-scope NOPASSWD sudoers
 
-Pour eviter les prompts password lors de l'usage quotidien (admin via tmux ou app mobile), un fichier `/etc/sudoers.d/cyberdefense-vpn` whiteliste 11 paths absolus :
+To avoid password prompts during daily use (admin via tmux or mobile app), an `/etc/sudoers.d/cyberdefense-vpn` file whitelists 11 absolute paths:
 
 ```
 <user> ALL=(root) NOPASSWD: /opt/homebrew/bin/wg, \
@@ -102,33 +102,33 @@ Pour eviter les prompts password lors de l'usage quotidien (admin via tmux ou ap
     /Users/.../scripts/backup-config.sh
 ```
 
-Aucun wildcard. `visudo -c -f` validation prealable + cross-check sur le tree complet apres install. Rollback automatique en cas d'invalidite. Le risque de bricker `sudo` = zero (teste deux fois en conditions reelles).
+No wildcards. `visudo -c -f` preliminary validation + cross-check on the full tree after install. Automatic rollback on invalidity. Risk of bricking `sudo`: zero (tested twice in real conditions).
 
 ---
 
-## Decouverte non-anticipee
+## Unanticipated discovery
 
-Pendant l'audit systematique d'un bug de mapping macOS userland (l'alias `wg0 → utun6` n'est pas resolu automatiquement par `wg syncconf`), le DEV a decouvert un **bug pre-existant dans le parser de `list-clients.sh`** : le script lisait 9 colonnes alors que `wg show <iface> dump` n'en sort que 8 (la colonne `iface` n'apparait que pour `wg show all dump`). Les variables etaient decalees, le filtre `[iface == wg0]` ne matchait jamais. Affichage `0B/never` meme avec un tunnel actif.
+During systematic audit of a macOS userland mapping bug (the `wg0 → utun6` alias not auto-resolved by `wg syncconf`), the DEV discovered a **pre-existing bug in the `list-clients.sh` parser**: the script was reading 9 columns when `wg show <iface> dump` only outputs 8 (the `iface` column appears only with `wg show all dump`). Variables were shifted, the `[iface == wg0]` filter never matched. `0B/never` displayed even with an active tunnel.
 
-Bug latent depuis l'ecriture initiale du script. Personne ne l'aurait jamais trouve sans cet audit profond. C'est un exemple typique du benefice de la discipline d'audit systematique.
+Latent bug since the script's initial writing. Nobody would have ever found it without this deep audit. Classic example of the benefit of systematic audit discipline.
 
 ---
 
 ## Documentation
 
-| Fichier | Contenu |
-|---------|---------|
-| `vpn-module/docs/procedures.md` | 270 lignes : usage, troubleshooting, recovery, rotation des cles, section 3.5 sur le piege macOS userland |
-| `docs/vpn-architecture.md` | Architecture reseau, plan d'adressage, decisions de securite |
-| `docs/vpn-api-spec.md` | Specifications de l'API HTTPS, decisions Nestor STRAT, plan d'implementation |
+| File | Content |
+|------|---------|
+| `vpn-module/docs/procedures.md` | 270 lines: usage, troubleshooting, recovery, key rotation, section 3.5 on the macOS userland trap |
+| `docs/vpn-architecture.md` | Network architecture, addressing plan, security decisions |
+| `docs/vpn-api-spec.md` | HTTPS API specifications, Nestor STRAT decisions, implementation plan |
 
 ---
 
-## Statistiques de livraison
+## Delivery statistics
 
-- **Demarre** : 30 avril 2026, ~10h45 CET
-- **Tunnel iPhone valide bout-en-bout** : meme jour, en quelques heures
-- **API HTTPS production** : meme jour, ~14h00 CET
-- **Total** : un sprint de demi-journee pour un module fonctionnel et securise
+- **Started**: April 30, 2026, ~10:45 CET
+- **iPhone tunnel validated end-to-end**: same day, in a few hours
+- **Production HTTPS API**: same day, ~14:00 CET
+- **Total**: a half-day sprint for a functional and secure module
 
-Ce n'est pas Sentinel lui-meme. C'est la preuve que la pipeline d'execution agentique fonctionne sur un perimetre bien defini, avec des decisions architecturales solides et de la rigueur a chaque couche.
+This isn't Sentinel itself. It's evidence that the agentic execution pipeline works on a well-defined scope, with solid architectural decisions and rigor at every layer.

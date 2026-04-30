@@ -1,61 +1,61 @@
-# Sentinel — l'EDR LLM-first
+# Sentinel — the LLM-first EDR
 
-> Detection par raisonnement semantique, pas par signature.
+> Detection by semantic reasoning, not by signature.
 
 ---
 
-## Le probleme
+## The problem
 
-Les RAT modernes (Sliver, Mythic, AsyncRAT) generent un hash unique a chaque build. Les bases de signatures sont mortes. Le ML sur features extraites (entropie binaire, structure des sections, tables d'import) capte les ressemblances avec du malware connu mais rate les binaires neufs en provenance de frameworks adversariaux.
+Modern RATs (Sliver, Mythic, AsyncRAT) generate a unique hash per build. Signature databases are dead. ML on extracted features (binary entropy, section structure, import tables) catches resemblance to known malware but misses fresh binaries from adversarial frameworks.
 
-Mesures comparatives sur le scenario de reference (un RAT installe via une application 3D legitime trojanisee) :
+Comparative measurements on the reference scenario (a RAT installed via a legitimate-but-trojanized 3D application):
 
-| Outil | Detection probable |
-|-------|-------------------|
-| Antivirus signatures | ~0% — hash inconnu |
+| Tool | Likely detection |
+|------|-----------------|
+| Signature antivirus | ~0% — unknown hash |
 | Defender for Endpoint macOS | ~25-35% |
 | CrowdStrike Falcon | ~50-60% |
 | SentinelOne Singularity | ~55-65% |
-| **Sentinel** | **>90%** (POC mesure) |
+| **Sentinel** | **>90%** (POC measurement) |
 
-Les EDR commerciaux integrent des assistants IA (Charlotte AI, Purple AI, Security Copilot) — mais ce sont des couches de tri **post-detection**. Si le sensor de base ne flagge pas, l'IA ne voit rien.
-
----
-
-## L'hypothese
-
-Et si le LLM faisait la detection primaire ?
-
-Un modele comme Claude Haiku 4.5 peut lire le contexte complet d'un evenement (binaire, signatures de code, arbre de processus, connexions reseau, source d'installation, correlation OSINT) et raisonner sur l'incoherence comportementale. Pas un score numerique : un verdict explicite avec justification.
-
-Exemple de verdict produit pendant le POC, sur un faux LaunchAgent simulant un RAT :
-
-> Le binaire s'appelle `com.system.update.helper` mais n'est pas signe Apple. Il a ete installe par un processus telecharge via curl depuis un domaine non-whitelisted. Il ouvre une socket vers une IP Vultr connue pour heberger du C2. La combinaison nom-imitant-Apple + non-signe + connexion-sortante-non-sollicitee + provenance-curl-direct est un pattern de RAT par persistance LaunchAgent. Verdict : RAT, confiance 99%. Action recommandee : kill + quarantaine.
-
-C'est une inference qui combine 5-6 signaux faibles en une conclusion forte. Aucun outil traditionnel ne le ferait.
+Commercial EDRs integrate AI assistants (Charlotte AI, Purple AI, Security Copilot) — but these are **post-detection** triage layers. If the base sensor doesn't flag, the AI sees nothing.
 
 ---
 
-## L'architecture
+## The hypothesis
+
+What if the LLM did primary detection?
+
+A model like Claude Haiku 4.5 can read the full context of an event (binary, code signatures, process tree, network connections, installation source, OSINT correlation) and reason about behavioral incoherence. Not a numeric score: an explicit verdict with justification.
+
+Example verdict produced during the POC, on a fake LaunchAgent simulating a RAT:
+
+> The binary is named `com.system.update.helper` but isn't signed by Apple. It was installed by a process downloaded via curl from a non-whitelisted domain. It opens a socket to a Vultr IP known for hosting C2. The combination Apple-mimicking-name + unsigned + unsolicited-outgoing-connection + curl-direct-provenance is a RAT pattern via LaunchAgent persistence. Verdict: RAT, 99% confidence. Recommended action: kill + quarantine.
+
+This is an inference combining 5-6 weak signals into a strong conclusion. No traditional tool would do this.
+
+---
+
+## The architecture
 
 ```
                 ┌─────────────────┐
-                │  Mac M3 / M2 /  │  Endpoints proteges
+                │  Mac M3 / M2 /  │  Protected endpoints
                 │   Spark Linux   │
                 └────────┬────────┘
                          │
                 ┌────────▼────────┐
-                │   osquery       │  Couche 1 : observation
+                │   osquery       │  Layer 1: observation
                 │  (Apache 2.0)   │  <2% CPU, <50 MB RAM
                 └────────┬────────┘
                          │ JSON events
                          ▼
                 ┌─────────────────┐
-                │     CORTEX      │  Couche 2 : analyse
+                │     CORTEX      │  Layer 2: analysis
                 │  Bun TypeScript │
                 │                 │
                 │  ┌───────────┐  │
-                │  │  triage   │  │  Haiku — 95% des events
+                │  │  triage   │  │  Haiku — 95% of events
                 │  │  Haiku    │  │  $0.0015/event, 2.64s
                 │  └─────┬─────┘  │
                 │        │        │
@@ -67,16 +67,16 @@ C'est une inference qui combine 5-6 signaux faibles en une conclusion forte. Auc
                 │  └─────┬─────┘  │
                 │        │        │
                 │  ┌─────▼─────┐  │
-                │  │  threat   │  │  Enrichissement IOC
-                │  │   intel   │  │  16 APIs gratuites
+                │  │  threat   │  │  IOC enrichment
+                │  │   intel   │  │  16 free APIs
                 │  └───────────┘  │
                 └────────┬────────┘
-                         │ verdicts + niveau menace
+                         │ verdicts + threat level
                          ▼
                 ┌─────────────────┐
-                │    RESPONSE     │  Couche 3 : actions
+                │    RESPONSE     │  Layer 3: actions
                 │                 │
-                │  log → alerte   │
+                │  log → alert    │
                 │  isolate proc   │
                 │  kill + quaran  │
                 │  block IP       │
@@ -86,62 +86,62 @@ C'est une inference qui combine 5-6 signaux faibles en une conclusion forte. Auc
 
 ---
 
-## Resultats POC quantifies
+## Quantified POC results
 
-Test sur 100 evenements representatifs (90 benins + 10 menaces) :
+Test on 100 representative events (90 benign + 10 threats):
 
-| Metrique | Cible PRD | Haiku 4.5 | Sonnet 4.6 |
-|----------|-----------|-----------|------------|
-| Confiance detection | >80% | 97.6% | 98.0% |
-| Latence par evenement | <5s | 2.64s | 8.31s |
-| Cout/jour 1000 events | <$5 | $1.52 | $7.97 |
-| Recall menaces | >80% | 100% | 100% |
-| F1 score corrige | — | ~95% | ~95% |
+| Metric | PRD target | Haiku 4.5 | Sonnet 4.6 |
+|--------|-----------|-----------|------------|
+| Detection confidence | >80% | 97.6% | 98.0% |
+| Latency per event | <5s | 2.64s | 8.31s |
+| Cost/day at 1,000 events | <$5 | $1.52 | $7.97 |
+| Threat recall | >80% | 100% | 100% |
+| Corrected F1 score | — | ~95% | ~95% |
 
-Les 10 vecteurs de menace testes : RAT LaunchAgent, cryptominer xmrig, reverse shell, info stealer (keychain/browser), backdoor, dropper curl|bash, brute force SSH, exfiltration DNS, escalade SUID, persistance crontab C2.
+The 10 threat vectors tested: RAT LaunchAgent, xmrig cryptominer, reverse shell, info stealer (keychain/browser), backdoor, dropper curl|bash, SSH brute force, DNS exfiltration, SUID escalation, crontab C2 persistence.
 
-100% recall sur les 10 vecteurs avec les deux modeles.
+100% recall on all 10 vectors with both models.
 
 ---
 
-## Limites honnetes
+## Honest limitations
 
-- **Latence ~3s par evenement** : impose un pre-filtrage local. Pour un volume eleve d'events benins, on triage avec des regles ou un petit modele local (Nemotron sur GPU Spark) avant l'API cloud.
-- **Cout au volume** : avec prompt caching le cout est gerable, mais sans optimisation un trafic non-filtre peut couter cher. Architecture en deux niveaux indispensable.
-- **Hallucinations** : zone grise. Seuils de confiance eleves (>85%) avant toute action destructive. Mode "apprentissage initial" pendant 7 jours pour calibrer la baseline.
-- **Defense complementaire requise** : pour les menaces fast-moving (ransomware qui chiffre en secondes), la latence LLM ne suffit pas. Sentinel coexiste avec une couche de defense classique pour ces cas.
+- **~3s latency per event**: requires local pre-filtering. For high benign event volume, we triage with rules or a small local model (Nemotron on Spark GPU) before the cloud API.
+- **Cost at scale**: with prompt caching the cost is manageable, but unfiltered traffic can get expensive fast. Two-tier architecture is essential.
+- **Hallucinations**: gray zones. High confidence thresholds (>85%) before any destructive action. "Initial learning" mode for 7 days to calibrate baseline.
+- **Complementary defense required**: for fast-moving threats (ransomware encrypting in seconds), LLM latency isn't enough. Sentinel coexists with a classical defense layer for these cases.
 
 ---
 
 ## Threat intelligence
 
-16 sources gratuites integrees ou en plan :
+16 free sources integrated or planned:
 
-**P0 (implementation Phase 1)** : Abuse.ch ThreatFox + URLhaus + MalwareBazaar + Feodo Tracker, CISA KEV, Google OSV.
+**P0 (Phase 1 implementation)**: Abuse.ch ThreatFox + URLhaus + MalwareBazaar + Feodo Tracker, CISA KEV, Google OSV.
 
-**P1 (Phase 2)** : NVD (NIST), AlienVault OTX, AbuseIPDB.
+**P1 (Phase 2)**: NVD (NIST), AlienVault OTX, AbuseIPDB.
 
-**P2 (Phase 3)** : VirusTotal (rate limit 4/min, 500/jour gratuit), Vulners, GreyNoise, CIRCL/MISP.
+**P2 (Phase 3)**: VirusTotal (rate limit 4/min, 500/day free), Vulners, GreyNoise, CIRCL/MISP.
 
-Cout total : **0 USD/jour** pour notre volume. Architecture en 3 couches (cache local SQLite refresh 5min + lookup API on-demand + sync periodique 2h).
-
----
-
-## Pourquoi pas (juste) Darktrace
-
-Darktrace est l'outil le plus proche philosophiquement — ML non-supervise sur le comportement du reseau, reponse autonome (Antigena). Mais Darktrace utilise des autoencoders et methodes Bayesiennes — il detecte des **anomalies statistiques**. Il ne peut pas *expliquer* pourquoi quelque chose est suspect en termes humains. Le LLM le peut, et c'est central pour le forensics conversationnel et la confiance operationnelle.
-
-Sentinel et Darktrace ne sont pas concurrents — ils sont complementaires. Mais sur le critere "explicabilite native du verdict", Sentinel est unique.
+Total cost: **$0/day** for our volume. Three-layer architecture (local SQLite cache refresh every 5min + on-demand API lookup + periodic 2h sync).
 
 ---
 
-## Roadmap publication
+## Why not (just) Darktrace
 
-- Phase 0 (recherche + POC) — termine, rapports complets disponibles
-- Phase 1 (daemon osquery + pipeline) — sprint en cours
-- Phase 2 (Cortex basique + dashboard) — sprint suivant
-- Phase 3 (Response autonome + forensics conversationnel) — Q3 2026
+Darktrace is the philosophically closest tool — unsupervised ML on network behavior, autonomous response (Antigena). But Darktrace uses autoencoders and Bayesian methods — it detects **statistical anomalies**. It cannot *explain* why something is suspicious in human terms. The LLM can, and that's central to conversational forensics and operational trust.
+
+Sentinel and Darktrace aren't competitors — they're complementary. But on the "native verdict explainability" criterion, Sentinel is unique.
+
+---
+
+## Publication roadmap
+
+- Phase 0 (research + POC) — complete, full reports available
+- Phase 1 (osquery daemon + pipeline) — sprint in progress
+- Phase 2 (basic Cortex + dashboard) — next sprint
+- Phase 3 (autonomous Response + conversational forensics) — Q3 2026
 - Phase 4 (honeypots + mutation defense + supply chain audit) — Q4 2026
-- Phase 5 (packaging produit, mode SaaS, agent marketplace) — 2027
+- Phase 5 (product packaging, SaaS mode, agent marketplace) — 2027
 
-Le code et les rapports techniques sont ouverts au fur et a mesure des livraisons.
+Code and technical reports are opened progressively as they ship.

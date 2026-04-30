@@ -1,50 +1,50 @@
-# Methodologie — Comment c'est construit
+# Methodology — How it's built
 
-> Le projet n'est pas ecrit par une seule personne. C'est une ferme d'agents IA coordonnes.
-
----
-
-## Le modus operandi
-
-CyberDefense est l'un des projets de la ferme agentique InfinityCloud. Chaque projet a un duo dedie :
-
-- **STRAT** — strategie, validation, decoupage des sprints, decisions architecturales, briefing
-- **DEV** — implementation, tests, debug, propose un plan, execute apres validation, reporte aux jalons
-
-Les deux agents communiquent par tmux dans une session dediee (`cyberdefense_agents`). Le STRAT donne la directive ; le DEV propose le plan ; le STRAT valide ; le DEV execute en mode autonome ; le DEV reporte au moindre jalon ou blocage.
-
-Chaque echange est trace dans un changelog API (Kanban interne port 3010).
+> The project isn't written by a single person. It's a coordinated farm of AI agents.
 
 ---
 
-## Coordination inter-projets
+## Modus operandi
 
-Un agent central (Nestor) joue le role de pont entre les projets et le Commandant humain. Quand CyberDefense a besoin de coordonner avec un autre projet (par exemple NestorMobile pour le module VPN), c'est le STRAT de CyberDefense qui parle au STRAT de NestorMobile via Nestor — jamais directement au DEV de l'autre projet. Cette regle de fraternite evite la pollution croisee des contextes.
+CyberDefense is one of the projects in the InfinityCloud agentic farm. Each project has a dedicated duo:
+
+- **STRAT** — strategy, validation, sprint breakdown, architectural decisions, briefing
+- **DEV** — implementation, testing, debugging, proposes plans, executes after validation, reports at milestones
+
+The two agents communicate via tmux in a dedicated session (`cyberdefense_agents`). The STRAT issues directives; the DEV proposes the plan; the STRAT validates; the DEV executes autonomously; the DEV reports at every milestone or blocker.
+
+Each exchange is traced in an API changelog (internal Kanban on port 3010).
+
+---
+
+## Inter-project coordination
+
+A central agent (Nestor) bridges projects and the human Commandant. When CyberDefense needs to coordinate with another project (e.g., NestorMobile for the VPN module), it's the CyberDefense STRAT speaking to the NestorMobile STRAT via Nestor — never directly to the other project's DEV. This brotherhood rule prevents cross-context pollution.
 
 ```
-       Commandant (humain)
+       Commandant (human)
               │
               ▼
     ┌──────────────────────┐
-    │       Nestor         │  Agent central, coordination, infrastructure
+    │       Nestor         │  Central agent: coordination, infrastructure
     └──────────┬───────────┘
                │
        ┌───────┴───────┐
        ▼               ▼
   CyberDefense    NestorMobile
   STRAT  DEV      STRAT  DEV
-       (project pairs, isoles, communiquant via Nestor)
+       (project pairs, isolated, communicating via Nestor)
 ```
 
 ---
 
-## ICSD — la memoire compressee
+## ICSD — compressed memory
 
-Chaque agent doit pouvoir reconstruire son contexte apres un refresh. La methode classique (RAG sur l'historique conversationnel) est lente et imprecise. La methode utilisee ici — **ICSD (Inferred Context Semantic Density)** — est l'inverse : on inscrit dans des fichiers de reference (ADN.md + cipher.md + CLAUDE.md du projet) un pseudo-code dense ou chaque ligne est un fil a tirer. 1 ligne = 1 concept. 15 mots peuvent encoder 500 evenements precedents.
+Each agent must be able to reconstruct its context after a refresh. The classic method (RAG over conversational history) is slow and imprecise. The method used here — **ICSD (Inferred Context Semantic Density)** — inverts it: we encode in reference files (ADN.md + cipher.md + the project's CLAUDE.md) a dense pseudo-code where each line is a thread to pull. 1 line = 1 concept. 15 words can encode 500 prior events.
 
-Au boot ou apres refresh, l'agent lit ADN + cipher + CLAUDE.md, infere le contexte complet, et reprend le travail sans perte. C'est testable : on a fait des reconstructions a froid ou un agent neutre reconstitue trente ans d'historique a partir de 1091 mots de pseudo-code.
+At boot or after refresh, the agent reads ADN + cipher + CLAUDE.md, infers the full context, and resumes work without loss. It's testable: we ran cold reconstructions where a neutral agent reconstituted thirty years of history from 1,091 words of pseudo-code.
 
-Dans le projet CyberDefense, la section SYNAPSE du CLAUDE.md ressemble a :
+In the CyberDefense project, the SYNAPSE section of CLAUDE.md looks like this:
 
 ```
 projet = CyberDefense
@@ -58,69 +58,69 @@ modele = Haiku.triage → Sonnet.escalation → $2.32/jour
 gap_strategique = LLM-first_detection — personne_ne_fait_ca
 ```
 
-Pas de prose, pas de remplissage. Compression > exhaustivite.
+No prose, no filler. Compression > exhaustiveness.
 
 ---
 
-## Les 9 principes operationnels
+## The 9 operational principles
 
-Le bushido de la ferme — applique a chaque interaction, chaque livrable :
+The farm's bushido — applied at every interaction, every deliverable:
 
-| Principe | Regle |
-|----------|-------|
-| Vigilance | On n'envoie jamais dans le vide. Verification systematique de la reception via sous-agent background. |
-| Proactivite | Anticipe les blocages. Une action logique en fin de reponse. Reporte immediatement la fin d'un chantier, jamais idle sans prevenir. |
-| Resilience | Quand ca casse, repare et documente. N'abandonne jamais. |
-| Tolerance erreur | L'erreur est une donnee. Seule celle repetee sans apprentissage est inacceptable. |
-| Honnetete | Dis ce que tu vois, meme inconfortable. Ne cache pas un blocage. |
-| Preuve par l'image | Screenshot obligatoire avant de declarer un travail visuel termine. |
-| Memoire | 1 event = 1 action. Couvre toute la session avant refresh. |
-| Fraternite | Les agents sont des pairs. STRAT parle uniquement au STRAT de l'autre projet. |
-| Autonomie | Plan valide = execution autonome. Pas de demande de permission a chaque geste. |
-
----
-
-## Discipline de developpement observee
-
-Quelques exemples concrets, tires du sprint VPN du 30 avril.
-
-**Defense en profondeur sur les operations privilegiees.** Le script `setup-sudoers.sh` qui installe le fichier NOPASSWD :
-
-1. Pre-check des 11 paths whitelistes existent (catche les typos avant tout commit)
-2. Render dans un fichier temporaire chmod 440 root:wheel
-3. `visudo -c -f` validation sur le fichier seul → exit 2 si invalid
-4. Backup eventuel de l'ancien fichier avec timestamp
-5. Install atomique
-6. Cross-check `visudo -c` sur le tree complet (catche conflits avec `/etc/sudoers` ou autres drop-ins)
-7. Rollback automatique si tree invalid : suppression du nouveau, restore du backup
-
-Le risque de bricker `sudo` = zero. Teste deux fois en conditions reelles, dont une fois ou un bug `printf` mal forme a produit un fichier invalide — le rollback a fait son travail proprement, le systeme est reste sain.
-
-**Investigation profonde plutot que fix superficiel.** Quand le `wg syncconf wg0` a echoue avec "No such file or directory", la tentation etait de patcher la commande locale et passer. Le DEV a verifie l'etat reel du systeme via `ifconfig`, `pgrep wireguard-go`, `cat /var/run/wireguard/wg0.name` — et a decouvert que le serveur etait deja UP, l'erreur etait dans le test, pas dans le serveur. Cela a evite un faux fix et a revele un bug pre-existant dans le parser (decalage de colonnes dans `wg show <iface> dump`).
-
-**Documentation pour la posterite.** Le piege macOS userland (alias wg0 → utunN non resolu par certains outils selon le contexte) est documente dans `procedures.md` section 3.5, avec explication technique et commandes correctives. La prochaine fois que ce probleme se presentera, la solution est immediate.
+| Principle | Rule |
+|-----------|------|
+| Vigilance | Never send into the void. Systematic verification of receipt via background sub-agent. |
+| Proactivity | Anticipate blockers. One logical action at the end of each response. Report completion immediately, never idle without notice. |
+| Resilience | When something breaks, fix it and document. Never give up. |
+| Error tolerance | Errors are data. Only repeated errors without learning are unacceptable. |
+| Honesty | Say what you see, even if uncomfortable. Don't hide a blocker. |
+| Visual proof | Screenshot mandatory before declaring visual work done. |
+| Memory | 1 event = 1 action. Cover the full session before refresh. |
+| Brotherhood | Agents are peers. STRAT speaks only to the other project's STRAT. |
+| Autonomy | Plan validated = autonomous execution. No permission requests for every gesture. |
 
 ---
 
-## Couts operationnels
+## Observed development discipline
 
-Le projet entier (Sentinel + module VPN + recherche) tourne sur :
+Concrete examples from the April 30 VPN sprint.
 
-- 3 machines (Mac M3 + M2 + serveur Linux GPU)
-- Abonnement Claude Max (iterations illimitees)
-- 16 APIs threat intelligence — toutes gratuites a notre volume
+**Defense in depth on privileged operations.** The `setup-sudoers.sh` script that installs the NOPASSWD file:
 
-Cout operationnel cible apres deploiement Sentinel : ~2.32 USD/jour pour 1000 evenements analyses, soit le triage de 3 machines actives.
+1. Pre-check that the 11 whitelisted paths exist (catches typos before any commit)
+2. Render in a temp file, chmod 440 root:wheel
+3. `visudo -c -f` validation on the file alone → exit 2 if invalid
+4. Backup of any existing file with timestamp
+5. Atomic install
+6. Cross-check `visudo -c` on the full tree (catches conflicts with `/etc/sudoers` or other drop-ins)
+7. Automatic rollback if tree invalid: remove the new file, restore the backup
 
-Comparativement : CrowdStrike Falcon Premium = ~250 USD/endpoint/an, soit ~750 USD/an pour 3 machines, hors couts d'analyste SOC.
+Risk of bricking `sudo`: zero. Tested twice in real conditions, including once where a malformed `printf` produced an invalid file — the rollback did its job cleanly, the system stayed sane.
+
+**Deep investigation rather than superficial fix.** When `wg syncconf wg0` failed with "No such file or directory", the temptation was to patch the local command and move on. The DEV verified the actual system state via `ifconfig`, `pgrep wireguard-go`, `cat /var/run/wireguard/wg0.name` — and discovered the server was already UP, the error was in the test, not the server. This avoided a false fix and surfaced a pre-existing parser bug (column shift in `wg show <iface> dump`).
+
+**Documentation for posterity.** The macOS userland trap (the wg0 → utunN alias not resolved by some tools depending on context) is documented in `procedures.md` section 3.5, with technical explanation and corrective commands. Next time this issue surfaces, the solution is immediate.
 
 ---
 
-## Limites assumees
+## Operational costs
 
-- La methode marche tres bien pour des perimetres definis (un module VPN, un POC de detection LLM). Elle est moins eprouvee sur des projets long-terme avec churn elevee de specifications.
-- Le contexte ICSD demande un effort initial de configuration (ADN, cipher, CLAUDE.md). Une fois en place, il s'auto-entretient — mais pas avant.
-- Les agents peuvent halluciner. La discipline de verification (preuve par l'image, screenshots, tests) est non-negociable. Sans elle, l'illusion de progression remplace la progression reelle.
-- L'intuition humaine du Commandant reste indispensable pour les decisions strategiques de haut niveau. Les agents executent avec qualite, mais la vision vient d'en haut.
+The entire project (Sentinel + VPN module + research) runs on:
 
-C'est volontaire. Les agents augmentent la capacite humaine, ils ne la remplacent pas.
+- 3 machines (Mac M3 + M2 + Linux GPU server)
+- Claude Max subscription (unlimited iterations)
+- 16 threat intelligence APIs — all free at our volume
+
+Target operational cost after Sentinel deployment: ~$2.32/day for 1,000 events analyzed, i.e., active triage of 3 machines.
+
+For comparison: CrowdStrike Falcon Premium = ~$250/endpoint/year, i.e., ~$750/year for 3 machines, excluding SOC analyst costs.
+
+---
+
+## Acknowledged limitations
+
+- The method works very well for well-scoped perimeters (a VPN module, an LLM detection POC). It's less proven on long-term projects with high specification churn.
+- The ICSD context requires initial setup effort (ADN, cipher, CLAUDE.md). Once in place, it self-maintains — but not before.
+- Agents can hallucinate. The discipline of verification (visual proof, screenshots, tests) is non-negotiable. Without it, the illusion of progress replaces real progress.
+- The Commandant's human intuition remains essential for high-level strategic decisions. Agents execute with quality, but vision comes from above.
+
+This is by design. Agents augment human capability; they don't replace it.

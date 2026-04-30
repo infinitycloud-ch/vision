@@ -1,6 +1,6 @@
-# Robotique Cognitive — depuis un bureau, en Suisse
+# Cognitive Robotics — from a desk, in Switzerland
 
-> Un quadrupède Unitree Go2, un supercalculateur de 100 watts sous le bureau, et la conviction que la robotique d'assistance ne doit pas attendre les milliards des grands groupes pour exister.
+> A Unitree Go2 quadruped, a 100-watt supercomputer under the desk, and the belief that assistive robotics shouldn't have to wait for big-tech billions to exist.
 
 [![Hardware](https://img.shields.io/badge/Hardware-NVIDIA%20DGX%20Spark%20GB10-76b900)](docs/hardware.md)
 [![Sim](https://img.shields.io/badge/Sim-Isaac%20Sim%205.1-76b900)](docs/architecture.md)
@@ -9,114 +9,114 @@
 
 ---
 
-## L'écosystème en marche
+## The ecosystem in motion
 
-![Dashboard X1 — télémétrie temps réel du quadrupède](./media/01-x1-dashboard.jpg)
+![X1 Dashboard — real-time telemetry of the quadruped](./media/01-x1-dashboard.jpg)
 
-*Dashboard X1 — interface de pilotage temps réel : batterie, IMU, position, motor states, vitesse instantanée. Le tableau de bord d'un véhicule cognitif.*
-
----
-
-## L'histoire
-
-Une personne, en Suisse, qui a passé quinze ans à gérer des programmes industriels (Pernod Ricard, CICR), s'est reconvertie à l'IA après un diagnostic auto-immun en 2023, a fondé Infinity Cloud Sàrl en 2024, et a posé en 2025 un **NVIDIA DGX Spark (GB10 Blackwell, 128 GB de mémoire unifiée, 100 W TDP)** sur son bureau.
-
-Pas de cluster cloud. Pas d'équipe de douze ingénieurs. Pas de roadmap dictée par un board.
-
-Le pari : qu'un GB10 sous le bureau, une discipline de simulation-first, et une **ferme agentique** d'agents IA spécialisés peuvent boucler un cycle complet — simulation → policy → robot réel → mesure → itération — à un coût et dans un délai qu'aucune grande structure n'égale par fluidité.
-
-Ce repo documente où ce pari en est.
+*X1 Dashboard — real-time pilot interface: battery, IMU, position, motor states, instantaneous velocity. The cockpit of a cognitive vehicle.*
 
 ---
 
-## L'écosystème, pièce par pièce
+## The story
 
-### Le cerveau — [MonoCLI](https://github.com/infinitycloud-ch/monocli)
+One person, in Switzerland, who spent fifteen years running industrial programs (Pernod Ricard, ICRC), pivoted to AI after an autoimmune diagnosis in 2023, founded Infinity Cloud Sàrl in 2024, and in 2025 placed a **NVIDIA DGX Spark (Grace-Blackwell GB10, 128 GB unified memory, 100 W TDP)** on his desk.
 
-Au cœur de l'orchestration : **MonoCLI**, un CLI Python que j'ai construit parce qu'aucun outil n'existait pour donner à un robot une mémoire persistante structurée. Knowledge Base SQLite, Playbooks YAML pour missions structurées, certification Jedi Rank (I → IV) pour valider les compétences du robot, Scribe d'apprentissage continu qui distille les leçons de session en session, perception VLM via Groq Maverick. 99,8 % de pass rate sur 390 tests, 0 chute sur 13+ runs de navigation.
+No cloud cluster. No team of twelve engineers. No board-driven roadmap.
 
-Le repo public : [github.com/infinitycloud-ch/monocli](https://github.com/infinitycloud-ch/monocli)
+The bet: that a GB10 under the desk, a simulation-first discipline, and an **agentic farm** of specialized AI agents can close a complete loop — simulation → policy → real robot → measurement → iteration — at a cost and tempo that no large structure can match for sheer fluidity.
 
-### Le corps — Unitree Go2 (et bientôt G1)
+This repo documents where that bet stands today.
 
-Un quadrupède EDU 12 DoF, abordable pour un développeur seul, sérieux pour la recherche. La même policy RL PPO entraînée sur GB10 tourne en simulation et sur le robot réel via le pattern `RobotAdapter` (sim/real agnostique). Le G1 humanoïde rejoindra l'écosystème dans la prochaine vague.
+---
 
-### Le monde — Isaac Sim 5.1 sur GB10
+## The ecosystem, piece by piece
+
+### The brain — [MonoCLI](https://github.com/infinitycloud-ch/monocli)
+
+At the core of the orchestration: **MonoCLI**, a Python CLI I built because no tool existed to give a robot a structured, persistent memory. SQLite knowledge base, YAML Playbooks for structured missions, Jedi Rank certification system (I → IV) to validate the robot's competence levels, a Scribe that distils lessons across sessions for continuous learning, VLM perception via Groq Maverick. 99.8% pass rate over 390 tests, 0 falls across 13+ navigation runs.
+
+Public repo: [github.com/infinitycloud-ch/monocli](https://github.com/infinitycloud-ch/monocli)
+
+### The body — Unitree Go2 (and soon G1)
+
+A 12-DoF EDU quadruped: affordable for a solo developer, serious enough for research. The same RL PPO policy trained on the GB10 runs in simulation and on the physical robot through the `RobotAdapter` pattern (sim/real agnostic). The G1 humanoid joins the ecosystem in the next wave.
+
+### The world — Isaac Sim 5.1 on GB10
 
 | | |
 |--|--|
-| ![Arène 25x15](./media/06-arena-25x15.png) | ![Multi-robot](./media/07-multi-robot.png) |
-| Arène de simulation 25 × 15 m, sol calibré, friction 1.0 (matche l'entraînement RL) | Multi-robot dans Isaac Sim — plusieurs Go2 en parallèle, OmniGraph piloté par ROS2 |
-| ![Locomotion](./media/08-locomotion.png) | ![Cyberpunk viewer](./media/09-cyberpunk-viewer.png) |
-| Policy RL en action, 25 Hz, observation 48-dim, 12 torques par tick | Viewer custom thème cyberpunk — outillage interne de debug |
+| ![Isaac Sim arena 25 by 15 meters with calibrated ground](./media/06-arena-25x15.png) | ![Multiple Unitree Go2 quadrupeds running in parallel in Isaac Sim](./media/07-multi-robot.png) |
+| 25 × 15 m simulation arena, calibrated ground, friction 1.0 (matches RL training) | Multi-robot in Isaac Sim — multiple Go2 in parallel, OmniGraph driven by ROS2 |
+| ![RL PPO locomotion policy executing at 25 Hz on Unitree Go2](./media/08-locomotion.png) | ![Custom cyberpunk-themed Isaac Sim viewer for debugging](./media/09-cyberpunk-viewer.png) |
+| RL policy in action: 25 Hz, 48-dim observation, 12 torques per tick | Custom cyberpunk-themed viewer — internal debug tooling |
 
-### La ferme agentique en action
+### The agentic farm in action
 
-![Multi-agents en parallèle](./media/02-multi-agent-farm.jpg)
+![Multi-agent farm: parallel Claude Code sessions in tmux orchestrating Isaac Sim and sprint reports](./media/02-multi-agent-farm.jpg)
 
-*Vue de l'écran principal : plusieurs sessions Claude Code orchestrées via tmux, Isaac Sim viewport au centre, rapports de sprint et tableaux comparatifs aux côtés. STRAT et DEV pour chaque projet, Nestor en chef d'orchestre.*
-
----
-
-## La preuve par les chiffres — Sprint 18 en mode autonome
-
-![Rapport Sprint 18 — Patrouille adaptative](./media/03-sprint18-success.jpg)
-
-**Mission** : prouver la boucle génétique complète — le robot perçoit, analyse, apprend, évolue.
-
-**Résultat** : SUCCÈS TOTAL. Cinq phases livrées (Gen 1 naïve → Gen 2 évoluée), gains mesurés **−18,4 % temps, −11,8 % distance, −17,6 % cycles**. La boucle fonctionne de bout en bout. 4/5 niveaux de résilience validés. Crunched en 21 min 53 s par la ferme agentique en autonome.
-
-C'est ce que veut dire « cognitive » dans le contexte de ce repo : le robot d'aujourd'hui n'est pas le même qu'hier, et l'amélioration est **quantifiable et reproductible**.
+*Main screen view: several Claude Code sessions orchestrated through tmux, Isaac Sim viewport in the center, sprint reports and comparison tables on the sides. STRAT and DEV pairs per project, Nestor as conductor.*
 
 ---
 
-## Le robot, en conditions réelles
+## Proof by the numbers — Sprint 18 in autonomous mode
 
-Deux séquences vidéo prises ce 30 avril 2026, sur le Go2 hors simulation :
+![Sprint 18 autonomous mode report: adaptive patrol with measured cognitive evolution gains](./media/03-sprint18-success.jpg)
+
+**Mission**: prove the complete genetic loop — the robot perceives, analyses, learns, evolves.
+
+**Result**: TOTAL SUCCESS. Five phases delivered (Gen 1 naive → Gen 2 evolved), measured gains: **−18.4% time, −11.8% distance, −17.6% cycles**. The loop works end-to-end. 4/5 resilience levels validated. Crunched in 21 min 53 s by the agentic farm in autonomous mode.
+
+This is what "cognitive" means in the context of this repo: today's robot is not yesterday's, and the improvement is **quantifiable and reproducible**.
+
+---
+
+## The robot, in real-world conditions
+
+Two video sequences captured on April 30, 2026, on the physical Go2 outside simulation:
 
 📹 [`media/04-go2-real-test-1.mp4`](./media/04-go2-real-test-1.mp4) — 6.9 MB
 📹 [`media/05-go2-real-test-2.mp4`](./media/05-go2-real-test-2.mp4) — 4.3 MB
 
-La policy entraînée sur GB10 en simulation est transférée sur le robot physique. C'est l'étape sim-to-real, et c'est l'étape qui sépare les démos LinkedIn des projets sérieux.
+The policy trained on the GB10 in simulation is transferred to the physical robot. This is the sim-to-real step — the step that separates LinkedIn demos from serious projects.
 
 ---
 
-## En 30 secondes — l'état actuel
+## In 30 seconds — current state
 
-| Brique | État | Référence |
+| Component | Status | Reference |
 |---|---|---|
-| **Inférence GR00T N1.7 sur Unitree G1** | Walk + turn validés | [docs/results.md](docs/results.md) |
-| **WBC clone GEAR-SONIC** | Référence bas niveau | [docs/results.md](docs/results.md) |
-| **Pipeline Hy3D → Isaac Sim** | 3 GLB livrés | [docs/results.md](docs/results.md) |
-| **Patrouille Go2 + VLM (GPT-4o)** | E2E validé | [docs/results.md](docs/results.md) |
-| **PID yaw correction** | Drift 70 % → 6 % | [docs/results.md](docs/results.md) |
+| **GR00T N1.7 inference on Unitree G1** | Walk + turn validated | [docs/results.md](docs/results.md) |
+| **GEAR-SONIC WBC clone** | Low-level reference | [docs/results.md](docs/results.md) |
+| **Hy3D → Isaac Sim pipeline** | 3 GLBs delivered | [docs/results.md](docs/results.md) |
+| **Go2 patrol + VLM (GPT-4o)** | E2E validated | [docs/results.md](docs/results.md) |
+| **PID yaw correction** | Drift 70% → 6% | [docs/results.md](docs/results.md) |
 | **Apple Vision Pro cockpit** | TDD v2.0 | [docs/architecture.md](docs/architecture.md) |
-| **Boucle génétique adaptative** | Sprint 18 SUCCÈS TOTAL | Voir rapport ci-dessus |
-| **MonoCLI brain CLI** | Production, 99,8 % pass rate | [github.com/infinitycloud-ch/monocli](https://github.com/infinitycloud-ch/monocli) |
+| **Adaptive genetic loop** | Sprint 18 TOTAL SUCCESS | See report above |
+| **MonoCLI brain CLI** | Production, 99.8% pass rate | [github.com/infinitycloud-ch/monocli](https://github.com/infinitycloud-ch/monocli) |
 
 ---
 
-## Le pari : 100 W contre des mégawatts
+## The bet: 100 W against megawatts
 
-Un cluster d'entraînement RL classique consomme l'équivalent d'une commune de 5 000 habitants. Le DGX Spark consomme moins qu'un sèche-cheveux.
+A standard RL training cluster consumes the equivalent of a town of 5,000 people. The DGX Spark consumes less than a hair dryer.
 
-Cette différence n'est pas qu'idéologique. Elle change ce qu'on peut **se permettre d'itérer**.
+This difference isn't just ideological. It changes what you can **afford to iterate**.
 
-- **128 GB de mémoire unifiée** — Isaac Sim 5.1 + Isaac Lab 2.3 + plusieurs policies en parallèle, sans swap.
-- **Architecture aarch64 (ARM)** — l'écosystème ML est mature, avec quelques angles morts à connaître.
-- **Refroidissement passif** — sessions de plusieurs heures sans throttling.
-- **100 W TDP** — branchable sur n'importe quelle prise standard, transportable, silencieux.
+- **128 GB unified memory** — Isaac Sim 5.1 + Isaac Lab 2.3 + several policies in parallel, no swap.
+- **aarch64 (ARM) architecture** — the ML ecosystem is mature, with a few blind spots to know.
+- **Passive cooling** — multi-hour sessions without throttling.
+- **100 W TDP** — plugs into any standard outlet, transportable, silent.
 
-Pas un substitut au DGX H100 d'un grand groupe. Un **outil suffisant pour boucler un cycle complet** : simulation → policy → robot → mesure → itération.
+Not a substitute for a big-corp DGX H100. A **tool sufficient to close a complete cycle**: simulation → policy → robot → measurement → iteration.
 
 ---
 
-## Pour qui ce repo
+## Who this repo is for
 
-- **Ingénieurs robotique** qui veulent voir ce qu'un développeur seul, équipé d'un GB10, peut produire en quelques mois.
-- **Chercheurs VLA / VLM** qui s'intéressent à la perception en environnement simulé puis réel.
-- **Décideurs santé / silver economy** qui cherchent un partenaire suisse pour l'assistance aux personnes vulnérables — c'est là que tout cela mène.
-- **Développeurs indépendants** qui hésitent à se lancer en robotique sans cluster cloud — voici la preuve que c'est possible.
+- **Robotics engineers** curious about what a solo developer with a GB10 can produce in a few months.
+- **VLA / VLM researchers** interested in perception in simulated then real environments.
+- **Health / silver economy decision-makers** looking for a Swiss partner for assistive robotics for vulnerable populations — that's where this is heading.
+- **Independent developers** hesitating to start in robotics without a cloud cluster — here is the proof that it's possible.
 
 ---
 
@@ -124,15 +124,15 @@ Pas un substitut au DGX H100 d'un grand groupe. Un **outil suffisant pour boucle
 
 ```
 robotics/
-├── README.md                 ← vous êtes ici
+├── README.md                 ← you are here
 ├── docs/
-│   ├── linkedin-article.md   ← article public (FR)
-│   ├── architecture.md       ← 3 couches : cerveau / pont / monde
-│   ├── hardware.md           ← GB10 Blackwell, choix techniques
-│   ├── results.md            ← métriques, screenshots, logs
-│   ├── methodology.md        ← simulation-first, ICSD, itération
-│   └── roadmap.md            ← prochains jalons, sim-to-real
-├── media/                    ← X1 dashboard, ferme agentique, vidéos Go2, Isaac Sim
+│   ├── linkedin-article.md   ← public article
+│   ├── architecture.md       ← 3 layers: brain / bridge / world
+│   ├── hardware.md           ← GB10 Blackwell, technical choices
+│   ├── results.md            ← metrics, screenshots, logs
+│   ├── methodology.md        ← simulation-first, ICSD, iteration
+│   └── roadmap.md            ← upcoming milestones, sim-to-real
+├── media/                    ← X1 dashboard, agentic farm, Go2 videos, Isaac Sim
 └── research/
     ├── compatibility.md      ← walk-these-ways, unitree_rl_gym, GR00T
     └── vlm_benchmark.md      ← Groq vs GPT-4o vs qwen3-vl vs Nemotron
@@ -140,13 +140,13 @@ robotics/
 
 ---
 
-## Liens
+## Links
 
-- **Article LinkedIn** : [Bâtir une infrastructure de robotique cognitive depuis la Suisse — seul, avec un GB10 Blackwell sous le bureau](docs/linkedin-article.md)
-- **Cerveau de l'écosystème** : [MonoCLI — github.com/infinitycloud-ch/monocli](https://github.com/infinitycloud-ch/monocli)
-- **Repo principal RoboticProgramAI** : [github.com/infinitycloud-ch/roboticprogramai](https://github.com/infinitycloud-ch/roboticprogramai)
-- **Contact** : Minh-Tam Dang — Infinity Cloud Sàrl, Genève, Suisse
+- **LinkedIn article**: [Building a cognitive robotics infrastructure from Switzerland — alone, with a GB10 Blackwell under the desk](docs/linkedin-article.md)
+- **Brain of the ecosystem**: [MonoCLI — github.com/infinitycloud-ch/monocli](https://github.com/infinitycloud-ch/monocli)
+- **Main RoboticProgramAI repo**: [github.com/infinitycloud-ch/roboticprogramai](https://github.com/infinitycloud-ch/roboticprogramai)
+- **Contact**: Minh-Tam Dang — Infinity Cloud Sàrl, Geneva, Switzerland
 
 ---
 
-*Dernière mise à jour : 2026-04-30 — itéré chaque semaine au rythme des breakthroughs.*
+*Last updated: 2026-04-30 — iterated weekly at the rhythm of breakthroughs.*

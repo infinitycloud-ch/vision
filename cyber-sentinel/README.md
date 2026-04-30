@@ -1,16 +1,16 @@
 # CyberDefense — Sentinel
 
-> Cyber-defense autonome basee sur le raisonnement LLM. Un EDR qui *comprend* ce qu'il observe au lieu de matcher des signatures.
+> Autonomous cyber defense built on LLM reasoning. An EDR that *understands* what it observes instead of matching signatures.
 
 ---
 
-## Pourquoi ce projet existe
+## Why this project exists
 
-Les outils de cyber-defense modernes (CrowdStrike, SentinelOne, Microsoft Defender) detectent entre **30% et 65% des RAT polymorphes** — selon le scenario, l'OS et la fraicheur de leur threat intelligence. Le decoupage classique (signatures + ML sur features + regles comportementales) marche tant que le malware ressemble a quelque chose de connu. Il echoue quand l'attaquant compile un binaire neuf — ce qui est devenu le defaut depuis Sliver, Mythic, et les packers triviaux.
+Modern cyber defense tools (CrowdStrike, SentinelOne, Microsoft Defender) detect somewhere between **30% and 65% of polymorphic RATs** — depending on the scenario, the OS, and how fresh their threat intelligence is. The classic split (signatures + ML on extracted features + behavioral rules) works well as long as the malware looks like something already known. It fails when the attacker compiles a fresh binary — which has been the default mode of operation since Sliver, Mythic, and trivial packers.
 
-Les modeles d'IA generative integres aux EDR commerciaux (Charlotte AI, Purple AI, Security Copilot) sont des couches **par-dessus** la detection : ils trient des alertes, redigent des rapports, accelerent l'investigation. Ils n'analysent pas l'evenement brut. C'est encore le moteur statique qui decide ce qui devient alerte.
+The generative AI layers integrated into commercial EDRs (Charlotte AI, Purple AI, Security Copilot) sit **on top of** detection: they triage alerts, write reports, accelerate investigation. They don't analyze raw events. The static engine still decides what becomes an alert.
 
-Sentinel propose l'inverse : **le LLM est le moteur de detection primaire**, pas une couche de tri post-detection. Personne ne fait ca aujourd'hui, et c'est volontaire — c'est le pari.
+Sentinel inverts the architecture: **the LLM is the primary detection engine**, not a post-detection triage layer. Nobody does this today, and it's by design — that's the bet.
 
 ---
 
@@ -18,162 +18,165 @@ Sentinel propose l'inverse : **le LLM est le moteur de detection primaire**, pas
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  Couche 1 — SENTINEL CORE (observation)                  │
+│  Layer 1 — SENTINEL CORE (observation)                   │
 │  osquery + FSEvents + Endpoint Security Framework        │
-│  <2% CPU, <50 MB RAM, JSON events temps reel             │
+│  <2% CPU, <50 MB RAM, real-time JSON event stream        │
 └──────────────────┬───────────────────────────────────────┘
-                   │ flux d'evenements
+                   │ event stream
                    ▼
 ┌──────────────────────────────────────────────────────────┐
-│  Couche 2 — CORTEX (raisonnement)                        │
-│  Claude Haiku (triage) → Sonnet (escalation suspects)    │
-│  Memoire usearch + SQLite, threat intel 16 APIs          │
+│  Layer 2 — CORTEX (reasoning)                            │
+│  Claude Haiku (triage) → Sonnet (escalation on suspects) │
+│  Memory: usearch + SQLite, threat intel: 16 free APIs    │
 └──────────────────┬───────────────────────────────────────┘
-                   │ verdicts + confiance
+                   │ verdicts + confidence
                    ▼
 ┌──────────────────────────────────────────────────────────┐
-│  Couche 3 — RESPONSE (actions graduees)                  │
-│  log → alerte → kill → quarantaine → isolation reseau    │
-│  Coffre-fort de quarantaine reversible, forensics LLM    │
+│  Layer 3 — RESPONSE (graduated actions)                  │
+│  log → alert → kill → quarantine → network isolation     │
+│  Reversible encrypted quarantine vault, LLM forensics    │
 └──────────────────────────────────────────────────────────┘
 ```
 
-**Decision architecturale clef :** ne pas reecrire un daemon custom. osquery couvre 90% des besoins d'observation, est sous Apache 2.0, mature, peu invasif. Concentrer l'effort d'ingenierie sur le Cortex — la partie veritablement nouvelle.
+**Core architectural decision:** don't rewrite a custom daemon. osquery covers 90% of the observation needs, is Apache 2.0, mature, low-overhead. Concentrate engineering effort on the Cortex — the genuinely novel part.
 
 ---
 
-## Resultats POC (validation Phase 0)
+## POC results (Phase 0 validation)
 
-Benchmark sur 100 evenements (90 benins + 10 menaces sur 10 vecteurs distincts : RAT, cryptominer, reverse shell, info stealer, dropper, brute force SSH, exfiltration DNS, escalade SUID, persistance crontab, backdoor LaunchAgent).
+Benchmark on 100 events (90 benign + 10 threats across 10 distinct vectors: RAT, cryptominer, reverse shell, info stealer, dropper, SSH brute force, DNS exfiltration, SUID escalation, crontab persistence, backdoor LaunchAgent).
 
-| Metrique | Cible PRD | Claude Haiku 4.5 | Claude Sonnet 4.6 |
-|----------|-----------|------------------|-------------------|
-| Confiance detection | >80% | **97.6%** ✅ | **98.0%** ✅ |
-| Latence par evenement | <5s | **2.64s** ✅ | 8.31s ❌ |
-| Cout/jour (1000 events) | <$5 | **$1.52** ✅ | $7.97 ❌ |
+| Metric | PRD target | Claude Haiku 4.5 | Claude Sonnet 4.6 |
+|--------|-----------|------------------|-------------------|
+| Detection confidence | >80% | **97.6%** ✅ | **98.0%** ✅ |
+| Latency per event | <5s | **2.64s** ✅ | 8.31s ❌ |
+| Cost/day (1,000 events) | <$5 | **$1.52** ✅ | $7.97 ❌ |
 | Recall (threat detection) | >80% | **100%** ✅ | **100%** ✅ |
 
-**Architecture retenue :** Haiku pour le triage de masse, escalation Sonnet sur les cas ambigus (~5-15% des events). Cout total estime pour 3 machines : **~2.32 USD/jour**.
+**Selected architecture:** Haiku for bulk triage, Sonnet escalation on ambiguous cases (~5-15% of events). Total estimated cost for 3 protected machines: **~$2.32/day**.
 
-Les faux positifs (13/90 sur Haiku) etaient causes par un generateur de donnees test qui appairait des processus legitimes a des connexions reseau improbables. Le LLM avait *raison* de les flagger : un syslogd qui se connecte a Discord est suspect. Apres correction du generateur, la precision corrigee depasse 90%.
+False positives (13/90 on Haiku) were caused by a test data generator pairing legitimate processes with implausible network connections. The LLM was *right* to flag them: a syslogd connecting to Discord is suspicious. After fixing the generator, corrected precision exceeds 90%.
 
 ---
 
-## Scenario concret
+## Concrete scenario
 
-Un RAT decouvert sur ma machine en mars 2026 — installe par CrealityPrint, un slicer 3D legitime mais trojanise. Le binaire `com.finder.helper` ouvrait une connexion C2 vers une IP Vultr.
+A RAT discovered on my machine in March 2026 — installed by CrealityPrint, a legitimate but trojanized 3D slicer. The `com.finder.helper` binary opened a C2 connection to a Vultr IP.
 
-| Outil | Detection probable |
-|-------|-------------------|
-| Antivirus traditionnel (signatures) | ~0% — hash inconnu, ignore |
+| Tool | Likely detection |
+|------|-----------------|
+| Traditional antivirus (signatures) | ~0% — unknown hash, ignored |
 | Defender for Endpoint macOS | ~25-35% |
 | CrowdStrike Falcon | ~50-60% |
 | SentinelOne Singularity | ~55-65% |
-| **Sentinel (LLM-first)** | **>90%** (POC mesure) |
+| **Sentinel (LLM-first)** | **>90%** (POC measurement) |
 
-Verdict produit par le LLM : *"Le binaire s'appelle com.finder.helper mais n'est pas signe Apple. Il a ete installe par un slicer 3D qui n'a aucune raison legitime d'enregistrer un service reseau. Il ouvre une socket vers une IP Vultr connue pour heberger du C2 de RAT polymorphes. RAT, confiance 94%."*
+Verdict produced by the LLM: *"The binary is named com.finder.helper but isn't signed by Apple. It was installed by a 3D slicer that has no legitimate reason to register a network service. It opens a socket to a Vultr IP known for hosting C2 of polymorphic RATs. RAT, 94% confidence."*
 
-C'est une inference semantique sur l'incoherence du comportement — pas une signature, pas un score ML, pas une regle pre-ecrite.
-
----
-
-## Etat du projet
-
-### Phase 0 — Recherche & POC (livre)
-
-- **Cartographie** de 10 outils EDR/XDR open source et commerciaux ([rapport](https://github.com/<vision>/cyberdefense/blob/main/research-phase0-axes1-2.md))
-- **Inventaire** de 16 APIs de threat intelligence gratuites (Abuse.ch, CISA KEV, NVD, OSV, AlienVault OTX, AbuseIPDB, etc.)
-- **POC** detection LLM sur 100 evenements ([benchmark](https://github.com/<vision>/cyberdefense/blob/main/benchmark-report.md))
-- **Decision Go/No-Go** : tous criteres passes, GO confirme
-
-### Module VPN annexe (livre)
-
-WireGuard self-hosted avec API HTTPS pour gestion. Livre le 30 avril 2026 en quelques heures de travail agentique. Decoupe en 6 blocks (setup serveur, reseau, scripts clients, tests, API, documentation). Tunnel valide bout-en-bout depuis iPhone.
-
-Composants :
-- 11 scripts CLI idempotents (install, uninstall, add-client, revoke-client, list-clients, diag-handshake, backup-config, etc.)
-- LaunchDaemon WireGuard + LaunchAgent API
-- API HTTPS Bun TypeScript sur port 3403, framework Hono
-- 5 endpoints (status, clients GET/POST/DELETE, server/restart) avec validation regex stricte anti-injection
-- Auth Bearer token avec comparaison constant-time
-- Sudoers NOPASSWD avec scope minimal (11 paths absolus, zero wildcard)
-- Self-elevate pattern dans les scripts (UX zero-prompt apres setup)
-- Documentation procedures + architecture (270 lignes)
-
-[Voir VPN_MODULE.md pour les details techniques.](VPN_MODULE.md)
-
-### Phase 1 — Sentinel Core daemon (a venir)
-
-- Configuration osquery sur les 3 machines
-- Pipeline osquery → Cortex via API Bun TypeScript
-- Watchers : processes, network, LaunchAgents, filesystem, code signing
-- Tests d'overhead reel sur production
-
-### Phase 2 — Cortex basique
-
-- Moteur d'analyse LLM avec triage Haiku → escalation Sonnet
-- Baseline learning sur 7 jours
-- Dashboard module dans Panda Portal
-- Integration threat intelligence (cache local + lookup on-demand)
-
-### Phase 3 — Response autonome
-
-- Actions graduees (log → kill → quarantaine → isolation)
-- Coffre-fort quarantaine chiffre reversible
-- Forensics conversationnel ("Qu'est-ce qui s'est passe hier soir ?")
-
-### Phase 4 — Intelligence avancee
-
-- Honeypots intelligents (generes par IA, adaptes au contexte de chaque machine)
-- Mutation defense (le daemon mute sa propre signature)
-- Audit supply chain (analyse semantique pre-installation npm/pip/brew)
-- Correlateur multi-machine
+This is semantic inference on behavioral incoherence — not a signature, not an ML score, not a pre-written rule.
 
 ---
 
-## Stack technique
+## Project status
 
-| Composant | Choix | Justification |
-|-----------|-------|---------------|
-| Daemon observation | osquery (Apache 2.0) | Stack Meta mature, peu invasive, 300+ tables, JSON natif |
-| Cortex | Bun + TypeScript | Coherent avec l'ecosysteme, performant, types stricts |
-| LLM | Claude Haiku 4.5 + Sonnet 4.6 | Recall 100%, latence 2.64s, cout 1.52 USD/jour |
-| Memoire menaces | usearch + SQLite | Vectoriel + relationnel, leger |
-| Threat intel | 16 APIs gratuites | Cout total 0 USD/jour pour notre volume |
-| API VPN | Bun + Hono | Framework leger TypeScript, support TLS natif |
+### Phase 0 — Research & POC (complete)
+
+- **Mapping** of 10 open-source and commercial EDR/XDR tools ([report](https://github.com/<vision>/cyberdefense/blob/main/research-phase0-axes1-2.md))
+- **Inventory** of 16 free threat intelligence APIs (Abuse.ch, CISA KEV, NVD, OSV, AlienVault OTX, AbuseIPDB, etc.)
+- **POC** of LLM detection on 100 events ([benchmark](https://github.com/<vision>/cyberdefense/blob/main/benchmark-report.md))
+- **Go/No-Go decision**: all criteria passed, GO confirmed
+
+### Annex VPN module (delivered)
+
+Self-hosted WireGuard with HTTPS API for management. Shipped April 30, 2026 in a few hours of agentic work. Broken into 6 blocks (server setup, networking, client scripts, tests, API, documentation). End-to-end tunnel validated from iPhone.
+
+Components:
+- 11 idempotent CLI scripts (install, uninstall, add-client, revoke-client, list-clients, diag-handshake, backup-config, etc.)
+- WireGuard LaunchDaemon + API LaunchAgent
+- Bun TypeScript HTTPS API on port 3403, Hono framework
+- 5 endpoints (status, clients GET/POST/DELETE, server/restart) with strict regex validation against injection
+- Bearer token auth with constant-time comparison
+- NOPASSWD sudoers with minimal scope (11 absolute paths, zero wildcards)
+- Self-elevate pattern in scripts (zero-prompt UX after setup)
+- Complete procedures + architecture documentation (270 lines)
+
+[See VPN_MODULE.md for technical details.](VPN_MODULE.md)
+
+### Phase 1 — Sentinel Core daemon (upcoming)
+
+- osquery configuration on the 3 machines
+- osquery → Cortex pipeline via Bun TypeScript API
+- Watchers: processes, network, LaunchAgents, filesystem, code signing
+- Real overhead testing in production
+
+### Phase 2 — Basic Cortex
+
+- LLM analysis engine with Haiku triage → Sonnet escalation
+- 7-day baseline learning
+- Dashboard module in Panda Portal
+- Threat intelligence integration (local cache + on-demand lookup)
+
+### Phase 3 — Autonomous Response
+
+- Graduated actions (log → kill → quarantine → isolation)
+- Encrypted reversible quarantine vault
+- Conversational forensics ("What happened last night?")
+
+### Phase 4 — Advanced intelligence
+
+- Intelligent honeypots (AI-generated, adapted to the context of each machine)
+- Mutation defense (the daemon mutates its own signature)
+- Supply chain audit (semantic pre-installation analysis for npm/pip/brew)
+- Multi-machine correlator
 
 ---
 
-## Methodologie de developpement
+## Technical stack
 
-Sentinel est construit par une ferme d'agents IA coordonnes (modus operandi InfinityCloud). Chaque projet a un duo STRAT (strategie, validation) + DEV (implementation, tests). Coordination par tmux, memoire compressee au format ICSD (Inferred Context Semantic Density), pont avec autres projets via un agent central.
-
-[Voir METHODOLOGY.md pour les details.](METHODOLOGY.md)
-
----
-
-## Liens
-
-- **Article LinkedIn** : `docs/linkedin-article.md` du repo CyberDefense
-- **Vue d'ensemble HTML** : `docs/sentinel-vue-densemble.html` du repo CyberDefense
-- **Rapport recherche** : `docs/research-phase0-axes1-2.md`
-- **Analyse concurrentielle** : `docs/competitive-analysis-edr.md`
-- **APIs threat intel** : `docs/threat-intel-apis-research.md`
-- **Benchmark POC** : `CyberDefense APP/poc-axe4/results/benchmark-report.md`
-- **Architecture VPN** : `docs/vpn-architecture.md`
-- **Spec API VPN** : `docs/vpn-api-spec.md`
-- **Procedures VPN** : `vpn-module/docs/procedures.md`
+| Component | Choice | Justification |
+|-----------|--------|---------------|
+| Observation daemon | osquery (Apache 2.0) | Mature Meta stack, low-overhead, 300+ tables, native JSON |
+| Cortex | Bun + TypeScript | Consistent with the ecosystem, performant, strict types |
+| LLM | Claude Haiku 4.5 + Sonnet 4.6 | 100% recall, 2.64s latency, $1.52/day cost |
+| Threat memory | usearch + SQLite | Vector + relational, lightweight |
+| Threat intel | 16 free APIs | Total cost: $0/day for our volume |
+| VPN API | Bun + Hono | Lightweight TypeScript framework, native TLS support |
 
 ---
 
-## Statut
+## Development methodology
 
-**Phase 0 :** complete (recherche + POC valide).
-**Module VPN :** en production sur le hub M3, tunnel iPhone valide bout-en-bout.
-**Phase 1 :** demarrage imminent.
+Sentinel is built by a coordinated farm of AI agents (InfinityCloud modus operandi). Each project has a STRAT (strategy, validation) + DEV (implementation, testing) duo. Coordination via tmux, compressed memory in ICSD format (Inferred Context Semantic Density), bridge with other projects via a central agent.
 
-Le code et les rapports techniques seront ouverts au fur et a mesure de la livraison. Si la cyber-defense par raisonnement vous interesse — ou si vous voyez des trous dans la logique — contact bienvenu.
+[See METHODOLOGY.md for details.](METHODOLOGY.md)
 
 ---
 
-*"Les murs protegent les chateaux. Les sentinelles protegent les royaumes."*
+## Links
+
+- **LinkedIn article** (English): `docs/linkedin-article-en.md` in the CyberDefense repo
+- **LinkedIn article** (French): `docs/linkedin-article.md` in the CyberDefense repo
+- **HTML overview**: `docs/sentinel-vue-densemble.html` in the CyberDefense repo
+- **Research report**: `docs/research-phase0-axes1-2.md`
+- **Competitive analysis**: `docs/competitive-analysis-edr.md`
+- **Threat intel APIs**: `docs/threat-intel-apis-research.md`
+- **POC benchmark**: `CyberDefense APP/poc-axe4/results/benchmark-report.md`
+- **VPN architecture**: `docs/vpn-architecture.md`
+- **VPN API spec**: `docs/vpn-api-spec.md`
+- **VPN procedures**: `vpn-module/docs/procedures.md`
+
+The French versions of these documents remain available as `*-fr.md` in this directory.
+
+---
+
+## Status
+
+**Phase 0:** complete (research + validated POC).
+**VPN module:** in production on the M3 hub, iPhone tunnel validated end-to-end.
+**Phase 1:** imminent start.
+
+Code and technical reports will be opened progressively as they ship. If reasoning-based cyber defense interests you — or if you see holes in the logic — feedback is welcome.
+
+---
+
+*"Walls protect castles. Sentinels protect kingdoms."*

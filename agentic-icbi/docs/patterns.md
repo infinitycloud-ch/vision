@@ -1,56 +1,56 @@
-# Patterns techniques découverts en pratique
+# Technical patterns discovered in practice
 
-> Quatre patterns extraits du chantier ICBI. Chacun est partagé sous forme : symptôme → cause racine → fix → leçon générique.
+> Four patterns pulled from the ICBI build. Each one is shared in the same shape: symptom → root cause → fix → generic lesson.
 
 ---
 
-## 1. Vue 3 `watch` + `immediate: true` pour composants async lazy-loadés
+## 1. Vue 3 `watch` + `immediate: true` for async lazy-loaded components
 
-**Contexte** : composant `DemoPlayer.vue` chargé via `defineAsyncComponent`, monté conditionnellement via `<Suspense v-if="demoActive">`, reçoit une prop `:active="demoActive"`.
+**Context**: a `DemoPlayer.vue` component loaded via `defineAsyncComponent`, mounted conditionally through `<Suspense v-if="demoActive">`, receiving an `:active="demoActive"` prop.
 
-**Symptôme** : la state machine du DemoPlayer reste bloquée à `idle`. Le pill `DEMO 1/3` s'affiche (le composant est bien monté), mais `start()` n'est jamais appelé. Pas de typing, pas de submit, rien.
+**Symptom**: the DemoPlayer state machine stays stuck at `idle`. The `DEMO 1/3` pill shows up (so the component is mounted), but `start()` is never called. No typing, no submit, nothing.
 
-**Cause racine** : Vue 3 `watch()` sans `immediate: true` ne tire **pas** sur la valeur initiale. Or, dans le pattern `defineAsyncComponent + Suspense v-if`, le composant est monté **avec `active=true` déjà présent** — il n'y a jamais eu de transition `false → true` que le watcher pourrait observer.
+**Root cause**: a Vue 3 `watch()` without `immediate: true` does **not** fire on the initial value. In the `defineAsyncComponent + Suspense v-if` pattern, the component is mounted **with `active=true` already set** — there's never been a `false → true` transition for the watcher to observe.
 
-**Fix** :
+**Fix**:
 
 ```ts
 watch(() => props.active, (now) => {
   if (now) start();
   else cleanup();
-}, { immediate: true });   // ← ajouter ceci
+}, { immediate: true });   // ← add this
 ```
 
-**Leçon générique** : pour tout composant `defineAsyncComponent` ou `<Suspense>`-wrapped dont le cycle de vie dépend d'une prop déjà active au mount, **toujours** poser `{ immediate: true }` sur le `watch`. L'alternative idiomatique est `onMounted(() => { if (props.active) start() })`, mais le watch immediate est plus propre et symétrique pour les transitions ultérieures.
+**Generic lesson**: for any `defineAsyncComponent` or `<Suspense>`-wrapped component whose lifecycle depends on a prop that's already active at mount, **always** set `{ immediate: true }` on the `watch`. The idiomatic alternative is `onMounted(() => { if (props.active) start() })`, but the immediate watch is cleaner and symmetric for later transitions.
 
 ---
 
-## 2. Sub-agent en parallèle pour data prep
+## 2. Sub-agent in parallel for data prep
 
-**Contexte** : le globe 3D du Sprint 2 cartographiait une cinquantaine de pays via une table `NAME_TO_ISO` inline dans `GlobeView.vue`. Sur des datasets à trois pays (employés européens), la sphère apparaissait visuellement vide.
+**Context**: the Sprint 2 3D globe was mapping about fifty countries through a `NAME_TO_ISO` table inlined in `GlobeView.vue`. On three-country datasets (European employees), the sphere looked visually empty.
 
-**Approche** : plutôt que de faire taper 250 entrées au DEV principal pendant qu'il travaillait sur autre chose, l'agent STRAT a délégué à un sub-agent généraliste lancé en background.
+**Approach**: rather than have the main DEV type 250 entries while working on something else, the STRAT agent delegated to a generalist sub-agent launched in the background.
 
-Brief précis :
+Precise brief:
 
-> Génère un fichier TypeScript `country-coords.ts` avec ~250 pays Natural Earth.
-> Format : `{ iso3, iso2, name, nameAlt?[], lat, lng, population?, continent }`.
-> Inclure 193 membres ONU + Vatican + Palestine + Taiwan + HK + Macao + 50 territoires.
-> Helpers : `COUNTRIES_BY_ISO3` Map (lookup O(1)), `findCountry(query)` fuzzy.
-> nameAlt avec variations FR + natives (Deutschland, Россия, 中国).
-> Sortie : compile sous `bun build`, 0 erreurs.
+> Generate a TypeScript file `country-coords.ts` with ~250 Natural Earth countries.
+> Format: `{ iso3, iso2, name, nameAlt?[], lat, lng, population?, continent }`.
+> Include 193 UN members + Vatican + Palestine + Taiwan + HK + Macao + 50 territories.
+> Helpers: `COUNTRIES_BY_ISO3` Map (O(1) lookup), `findCountry(query)` fuzzy.
+> nameAlt with FR variants + native names (Deutschland, Россия, 中国).
+> Output: compiles under `bun build`, 0 errors.
 
-**Résultat** : 250 entrées balancées (AF:59, AS:52, EU:52, NA:40, OC:28, SA:14, AN:5), bundle 31.78 KB ESM, livré en 199 secondes pendant que le DEV principal continuait Wave 1.
+**Result**: 250 entries shipped (AF:59, AS:52, EU:52, NA:40, OC:28, SA:14, AN:5), 31.78 KB ESM bundle, delivered in 199 seconds while the main DEV kept working on Wave 1.
 
-**Leçon générique** : les tâches de data prep, génération de fixtures, scaffolding répétitif sont des candidats parfaits pour un sub-agent en mode background. Le brief doit être **précis sur le format, les contraintes de qualité, et la condition d'acceptation** (compile, runs, passes tests). On ne demande pas un sub-agent de "réfléchir" — on lui demande de produire un livrable mesurable.
+**Generic lesson**: data prep, fixture generation, and repetitive scaffolding are perfect candidates for a sub-agent in background mode. The brief has to be **precise on format, quality constraints, and the acceptance condition** (compiles, runs, passes tests). You don't ask a sub-agent to "think" — you ask it to produce a measurable deliverable.
 
 ---
 
-## 3. Limite Anthropic 2000 px côté le plus long
+## 3. Anthropic 2000 px limit on the long edge
 
-**Contexte** : un agent DEV utilisait Puppeteer headless avec viewport `1600 × 1000` et `deviceScaleFactor: 2` pour produire des screenshots Retina. Output réel : `3200 × 2000 px`.
+**Context**: a DEV agent was using headless Puppeteer with a `1600 × 1000` viewport and `deviceScaleFactor: 2` to produce Retina screenshots. Actual output: `3200 × 2000 px`.
 
-**Symptôme** : après quelques captures injectées dans son contexte, l'agent a reçu :
+**Symptom**: after a few captures injected into its context, the agent received:
 
 ```
 An image in the conversation exceeds the dimension limit
@@ -58,43 +58,43 @@ for many-image requests (2000px). Run /compact to remove
 old images from context, or start a new session.
 ```
 
-L'agent était bloqué pendant deux heures, incapable d'avancer.
+The agent was stuck for two hours, unable to make progress.
 
-**Reprise** : `/compact` (préserve le contexte sémantique) plutôt que `/clear` (nucléaire, perd tout). Avant `/compact`, log d'event Kanban + écriture dans `CLAUDE.md` du status courant pour permettre la reprise propre.
+**Recovery**: `/compact` (preserves the semantic context) rather than `/clear` (nuclear, loses everything). Before `/compact`, log a Kanban event + write the current status into `CLAUDE.md` so the recovery is clean.
 
-**Fix proactif** :
+**Proactive fix**:
 
 ```js
 const VIEWPORT = { width: 1600, height: 1000, deviceScaleFactor: 1 };
 //                                            ^^^^^^^^^^^^^^^^^^^^^
-// dsf=1 par défaut, dsf=2 uniquement si Retina nécessaire,
-// puis sharp/jimp downscale post-capture à 1800 px max.
+// dsf=1 by default, dsf=2 only when Retina is needed,
+// then sharp/jimp downscale post-capture to 1800 px max.
 ```
 
-**Leçon générique** : avant d'injecter des médias dans un contexte LLM, **vérifier les limites du fournisseur** (Anthropic 2000px, OpenAI 20MB, Google 4MB selon API). Un downscale à la source coûte rien et évite des blocages opaques.
+**Generic lesson**: before injecting media into an LLM context, **check the provider limits** (Anthropic 2000px, OpenAI 20MB, Google 4MB depending on the API). A downscale at the source costs nothing and avoids opaque blockers.
 
 ---
 
-## 4. Pivot resilience — fallback inter-agent
+## 4. Pivot resilience — cross-agent fallback
 
-**Contexte** : pendant Sprint 2.7, le DEV principal s'est retrouvé bloqué par la limite 2000px et n'arrivait pas à reprendre. Le STRAT a constaté l'inactivité (>2h, aucun event Kanban posté) et a demandé à Nestor (l'agent infra méta) l'autorisation d'intervenir.
+**Context**: during Sprint 2.7, the main DEV got stuck on the 2000px limit and couldn't recover. The STRAT noticed the inactivity (>2h, no Kanban events posted) and asked Nestor (the meta infra agent) for permission to step in.
 
-**Procédure** :
+**Procedure**:
 
-1. **Trigger** : DEV bloqué >30 min sur tâche urgente.
-2. **Autorisation** : explicite par STRAT homologue (jamais unilatérale).
-3. **Scope** : STRAT peut lire et modifier le code du DEV pour débloquer, avec documentation claire de l'intervention (events Kanban + comments dans le code).
-4. **Communication** : event `FIX` sur Kanban + notify DEV (pour reprise) + notify Nestor (audit trail).
-5. **Préservation du workflow DEV** : laisser DEV reprendre normalement post-déblocage. Ne pas continuer son travail si lui revient.
+1. **Trigger**: DEV stuck >30 min on an urgent task.
+2. **Authorization**: explicit, from the peer STRAT (never unilateral).
+3. **Scope**: STRAT can read and modify the DEV's code to unblock, with clear documentation of the intervention (Kanban events + comments in the code).
+4. **Communication**: `FIX` event on Kanban + notify DEV (for handoff) + notify Nestor (audit trail).
+5. **Preservation of the DEV workflow**: let DEV resume normally after the unblock. Don't keep working on their task once they're back.
 
-**Cas concret** : STRAT a lu `DemoPlayer.vue`, identifié H1 (`watch` sans `immediate`), appliqué le fix d'une ligne, rebuild frontend, lancé Puppeteer dsf=1 pour générer 4 screenshots de validation, mis à jour le Kanban. Le DEV est revenu plus tard et a repris la Wave 2 (intégration country-coords + viz enrichies + dashboard) sans avoir à refaire le travail.
+**Concrete case**: STRAT read `DemoPlayer.vue`, identified H1 (`watch` without `immediate`), applied the one-line fix, rebuilt the frontend, ran Puppeteer dsf=1 to generate 4 validation screenshots, updated the Kanban. The DEV came back later and picked up Wave 2 (country-coords integration + enriched viz + dashboard) without having to redo the work.
 
-**Leçon générique** : la fraternité agentique sans rigidité de rôle. Un STRAT peut se mouiller les mains quand le DEV est out, à condition de respecter trois invariants : autorisation explicite, traçabilité brutale, restitution dès retour.
+**Generic lesson**: agentic fraternity without role rigidity. A STRAT can get their hands dirty when the DEV is out, as long as three invariants hold: explicit authorization, brutal traceability, handoff back on return.
 
 ---
 
-## Patterns à venir
+## Patterns coming up
 
-- **Bench LLM systématique** sur un set de questions canoniques (gpt-4.1-mini vs gpt-5-mini reasoning : 1.3 s vs 5.7 s, `max_completion_tokens` incompatible) — décision documentée dans la SYNAPSE.
-- **Type-aware SQL prompt** : schema typé DuckDB (`DOUBLE`, `VARCHAR`, `BOOLEAN`, `TIMESTAMP`) injecté dans le system prompt, plus quatre few-shots couvrant chaque type. Réduit les `Conversion Error` à zéro sur le set régression.
-- **Migration rétro-compatible Sprint N → Sprint N+1** : sha256-verified, idempotent, log d'event ARCH_CHANGE. Aucune perte de données entre Sprint 1 (DuckDB monolithique) et Sprint 2 (multi-profils).
+- **Systematic LLM bench** on a canonical question set (gpt-4.1-mini vs gpt-5-mini reasoning: 1.3 s vs 5.7 s, `max_completion_tokens` incompatible) — decision documented in the SYNAPSE.
+- **Type-aware SQL prompt**: typed DuckDB schema (`DOUBLE`, `VARCHAR`, `BOOLEAN`, `TIMESTAMP`) injected into the system prompt, plus four few-shots covering each type. Drops `Conversion Error` to zero on the regression set.
+- **Backwards-compatible migration Sprint N → Sprint N+1**: sha256-verified, idempotent, `ARCH_CHANGE` event logged. No data loss between Sprint 1 (monolithic DuckDB) and Sprint 2 (multi-profile).

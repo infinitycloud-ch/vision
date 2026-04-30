@@ -1,96 +1,96 @@
-# Roadmap — Ce qui vient, et ce qui reste à prouver
+# Roadmap — What's next, and what's left to prove
 
-> Pas de promesse marketing. Des jalons techniques précis, datés quand c'est possible.
-
----
-
-## Court terme (1-2 mois)
-
-### Sim-to-real boustrophédon Go2 (Palier 1)
-**Statut :** en cours.
-- Bridge `go2_bridge.py` : endpoints `/move`, `/stop`, `/status` ✅ (avril 2026).
-- BoustrophedonService Swift sur iPhone : en cours côté équipe MonoCLI.
-- Test physique 10×10m attendu : mai 2026.
-- Critère succès : 100/100 cellules couvertes, 0 chute, ARKit tracking maintenu.
-
-### Mission patrouille avec discrimination animal/humain (physique)
-**Statut :** validé en simulation, à porter sur Go2 réel.
-- Pipeline VLM + identification déjà E2E en sim.
-- Reste à valider en environnement réel avec assets 3D imprimés ou figurines.
-
-### Capteur olfactif BME690
-**Statut :** spec'd, hardware non commandé.
-- Détection de gaz, recherche par signature olfactive.
-- Use case : détection chute (urine) en EHPAD.
-- ETA : courant T2 2026.
+> No marketing promises. Concrete technical milestones, dated where possible.
 
 ---
 
-## Moyen terme (3-6 mois)
+## Short term (1–2 months)
 
-### G1 humanoïde — autonomie en environnement structuré
-**Statut :** GR00T N1.7 inférence OK, autonomie 0.
+### Sim-to-real Go2 boustrophedon (Tier 1)
+**Status:** in progress.
+- `go2_bridge.py`: `/move`, `/stop`, `/status` endpoints ✅ (April 2026).
+- BoustrophedonService Swift on iPhone: in progress on the MonoCLI team side.
+- Physical test on a 10×10m zone expected: May 2026.
+- Success criterion: 100/100 cells covered, 0 falls, ARKit tracking maintained.
 
-Objectifs :
-- Navigation point à point dans une chambre EHPAD simulée.
-- Détection chute simulée et alerte.
-- Dialogue naturel avec patient simulé.
+### Patrol mission with animal/human discrimination (physical)
+**Status:** validated in simulation, to port to the real Go2.
+- VLM + identification pipeline already E2E in sim.
+- Remaining work: validate in a real environment with 3D-printed assets or figurines.
 
-### Apple Vision Pro cockpit — déploiement clinique
-**Statut :** TDD v2.0 finalisé, implémentation pas démarrée.
-- Visualisation des "pensées" du robot en MR.
-- Apprentissage par démonstration / VLA via Vision Pro.
-- ETA : T3 2026.
-
-### Pipeline Hy3D enrichi
-**Statut :** 3 GLB livrés, pipeline reproductible.
-
-Objectifs :
-- 20+ assets de scène EHPAD (lits, fauteuils, éclairages, signalétique).
-- Génération automatique de scènes complètes (procédural + Hy3D).
+### BME690 olfactory sensor
+**Status:** spec'd, hardware not yet ordered.
+- Gas detection, scent-signature search.
+- Use case: fall detection (urine) in nursing homes.
+- ETA: during Q2 2026.
 
 ---
 
-## Long terme (6-12 mois)
+## Medium term (3–6 months)
 
-### Pilote en EHPAD réel (Suisse)
-**Statut :** discussions préliminaires HES-SO, Fegems.
-- Critère go/no-go : succès des tests sim-to-real palier 1 + 2.
-- Risque : régulation médicale, RGPD, sécurité.
-- Stratégie : démarrage en mode observation passive (pas d'interaction physique avec patients).
+### G1 humanoid — autonomy in a structured environment
+**Status:** GR00T N1.7 inference OK, autonomy 0.
 
-### Validation Venture Kick / financement
-**Statut :** pitch v1 rédigé.
-- Compagnon CHF 5000 marché EHPAD Suisse.
-- Application pour CHF 150k Phase 1.
+Goals:
+- Point-to-point navigation in a simulated nursing-home room.
+- Simulated fall detection and alerting.
+- Natural dialogue with a simulated patient.
 
-### Open-sourcing partiel
-**Statut :** réflexion en cours.
+### Apple Vision Pro cockpit — clinical deployment
+**Status:** TDD v2.0 finalized, implementation not started.
+- Visualise the robot's "thoughts" in MR.
+- Demonstration-based learning / VLA via Vision Pro.
+- ETA: Q3 2026.
 
-Décision à prendre : quelles briques rendre publiques ?
-- **Probables open-source :** API contracts, templates Isaac Sim, pipelines de validation, mémoire ICSD.
-- **Probable propriétaire :** moteur MonoCLI, méthodologie agentique complète, intégrations EHPAD.
+### Enhanced Hy3D pipeline
+**Status:** 3 GLBs delivered, pipeline reproducible.
 
----
-
-## Limites assumées
-
-Ce qui ne sera **pas** fait dans cette roadmap :
-
-- **Entraînement de policies fondamentales from-scratch** — réservé aux acteurs avec cluster H100.
-- **Hardware custom** — on reste sur Unitree + iPhone + Vision Pro + DGX Spark.
-- **Internationalisation rapide** — focus Suisse (puis Europe francophone) avant tout.
-- **Levée de fonds massive** — l'objectif est de démontrer qu'on peut avancer sans.
+Goals:
+- 20+ nursing-home scene assets (beds, chairs, lighting, signage).
+- Automatic generation of full scenes (procedural + Hy3D).
 
 ---
 
-## Métriques de progression
+## Long term (6–12 months)
 
-À chaque sprint, deux questions :
+### Pilot in a real Swiss nursing home
+**Status:** preliminary discussions with HES-SO, Fegems.
+- Go/no-go criterion: success of Tier 1 + Tier 2 sim-to-real tests.
+- Risk: medical regulation, GDPR, safety.
+- Strategy: start in passive observation mode (no physical interaction with patients).
 
-1. **Qu'est-ce qui marche que je ne pouvais pas démontrer le sprint dernier ?**
-2. **Qu'est-ce qui ne marche toujours pas, et pourquoi ?**
+### Venture Kick / funding validation
+**Status:** pitch v1 drafted.
+- CHF 5,000 companion targeting the Swiss nursing-home market.
+- Application for CHF 150k Phase 1.
 
-Pas d'OKR fancy. Pas de KPI à tableau de bord. Juste ces deux questions, à chaque revue.
+### Partial open-sourcing
+**Status:** under consideration.
 
-C'est suffisant pour avancer vite. Et ça force l'honnêteté.
+Decision pending: which bricks to make public?
+- **Likely open-source:** API contracts, Isaac Sim templates, validation pipelines, ICSD memory format.
+- **Likely proprietary:** MonoCLI engine, full agentic methodology, nursing-home integrations.
+
+---
+
+## Acknowledged limits
+
+What this roadmap explicitly does **not** include:
+
+- **Training foundational policies from scratch** — reserved for actors with H100 clusters.
+- **Custom hardware** — sticking with Unitree + iPhone + Vision Pro + DGX Spark.
+- **Rapid internationalization** — Switzerland focus first (then French-speaking Europe).
+- **Major fundraising** — the goal is to demonstrate that progress is possible without it.
+
+---
+
+## Progress metrics
+
+At every sprint, two questions:
+
+1. **What works that I couldn't demonstrate last sprint?**
+2. **What still doesn't work, and why?**
+
+No fancy OKRs. No dashboard KPIs. Just these two questions, every review.
+
+That's enough to move fast. And it forces honesty.

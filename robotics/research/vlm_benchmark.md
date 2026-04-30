@@ -1,96 +1,96 @@
-# Benchmark VLM — Vision-Language Models pour patrouille robotique
+# VLM Benchmark — Vision-Language Models for robotic patrol
 
 ## Setup
 
-**Image test :** caméra Isaac Sim 640×480 JPEG (qualité 80, ~25 KB).
-**Prompt :** "Décris ce que tu vois en 2 phrases. Y a-t-il une personne ou un animal ?"
-**Date :** mars-avril 2026.
-**Hardware :** appel cloud depuis Mac M3 Ultra ou Spark (10 Gbit Ethernet).
+**Test image:** Isaac Sim camera 640×480 JPEG (quality 80, ~25 KB).
+**Prompt:** "Describe what you see in 2 sentences. Is there a person or an animal?"
+**Date:** March–April 2026.
+**Hardware:** cloud calls from Mac M3 Ultra or Spark (10 Gbit Ethernet).
 
 ---
 
-## Résultats
+## Results
 
-| Modèle | Latence p50 | Throughput | Coût (~) | Verdict |
+| Model | p50 latency | Throughput | Cost (~) | Verdict |
 |---|---|---|---|---|
-| **Groq Llama-4-Scout 17B** | 0.34 s | 187 tok/s | <0.001 USD/req | Champion vitesse |
-| **OpenAI GPT-4o** | 3.57 s | 7.6 tok/s | ~0.005 USD/req | Production actuelle |
-| **Ollama qwen3-vl (local Spark)** | 9.15 s | 38 tok/s | 0 USD (local) | Fallback offline |
-| **Nemotron-12B-VL** | n/a | n/a | n/a | Bloqué aarch64 |
+| **Groq Llama-4-Scout 17B** | 0.34 s | 187 tok/s | <USD 0.001/req | Lowest latency |
+| **OpenAI GPT-4o** | 3.57 s | 7.6 tok/s | ~USD 0.005/req | Current production |
+| **Ollama qwen3-vl (local Spark)** | 9.15 s | 38 tok/s | USD 0 (local) | Offline fallback |
+| **Nemotron-12B-VL** | n/a | n/a | n/a | Blocked on aarch64 |
 
 ---
 
-## Détails par modèle
+## Per-model details
 
 ### Groq Llama-4-Scout 17B
 
-**Le plus rapide.** 0.34s de latence end-to-end inclut le réseau. C'est plus rapide que ce qui est nécessaire pour la patrouille.
+**The fastest.** 0.34s end-to-end latency includes the network. Faster than what's needed for patrols.
 
-**Limites observées :**
-- Cloudflare bloquait initialement les requêtes vision sans header User-Agent (erreur 1010). Fixé en ajoutant `User-Agent: patrol/1.0`.
-- Description un peu plus générique que GPT-4o sur les scènes complexes.
-- Les modèles vision préview Groq (`llama-3.2-11b-vision-preview`, `llama-3.2-90b-vision-preview`) ont été décommissionnés début avril 2026 — seul Llama-4-Scout supporte vision désormais sur Groq.
+**Observed limits:**
+- Cloudflare initially blocked vision requests without a User-Agent header (error 1010). Fixed by adding `User-Agent: patrol/1.0`.
+- Description slightly more generic than GPT-4o on complex scenes.
+- Groq's preview vision models (`llama-3.2-11b-vision-preview`, `llama-3.2-90b-vision-preview`) were decommissioned in early April 2026 — only Llama-4-Scout supports vision on Groq now.
 
-**Use case :** scans de routine quand la latence prime (chaque 5s pendant la patrouille). Ne plus utiliser pour les décisions critiques d'identification.
+**Use case:** routine scans where latency dominates (every 5s during patrol). No longer used for critical identification decisions.
 
 ### OpenAI GPT-4o
 
-**Production actuelle.** Migration depuis Groq décidée en avril 2026.
+**Current production.** Migration from Groq decided in April 2026.
 
-**Forces :**
-- Qualité de raisonnement supérieure sur les scènes simulées (mesh non photo-réalistes).
-- Capable de comprendre des prompts contextualisés (e.g. "Le Docteur dans cette simulation est représenté par une grande forme bleue").
-- API stable, documentation complète, format multimodal standard.
+**Strengths:**
+- Higher reasoning quality on simulated scenes (non-photoreal meshes).
+- Capable of understanding contextualized prompts (e.g. "The Doctor in this simulation is represented by a large blue shape").
+- Stable API, complete documentation, standard multimodal format.
 
-**Faiblesses :**
-- Latence 10× supérieure à Groq.
-- Coût non négligeable à grande échelle.
+**Weaknesses:**
+- 10× higher latency than Groq.
+- Non-trivial cost at scale.
 
-**Use case actuel :** identification critique + décision d'autorisation d'accès. La latence est acceptée parce que la décision est ponctuelle (quelques fois par mission, pas en boucle).
+**Current use case:** critical identification + access-authorization decisions. The latency is acceptable because the decision is intermittent (a few times per mission, not in a tight loop).
 
-### Ollama qwen3-vl (local sur Spark)
+### Ollama qwen3-vl (local on Spark)
 
-**Fallback offline.** Tourne entièrement sur le DGX Spark, pas de dépendance cloud.
+**Offline fallback.** Runs entirely on the DGX Spark, no cloud dependency.
 
-**Forces :**
-- 0 USD par requête, scalable.
-- Pas de fuite de données (toutes les images restent sur Spark).
-- Latence de 9s acceptable pour des analyses asynchrones.
+**Strengths:**
+- USD 0 per request, scalable.
+- No data leakage (all images stay on Spark).
+- 9s latency acceptable for asynchronous analyses.
 
-**Faiblesses :**
-- Latence 25× plus lente que Groq.
-- Qualité légèrement inférieure à GPT-4o sur les nuances.
+**Weaknesses:**
+- 25× slower than Groq.
+- Quality slightly below GPT-4o on subtle scenes.
 
-**Use case :** mode dégradé (panne internet) ou batch processing offline.
+**Use case:** degraded mode (no internet) or offline batch processing.
 
 ### Nemotron-12B-VL (NVIDIA)
 
-**Bloqué.** Le modèle NVIDIA Nemotron Vision-Language requiert `mamba-ssm` qui n'a pas de wheel pour aarch64 au moment du test.
+**Blocked.** The NVIDIA Nemotron Vision-Language model requires `mamba-ssm`, which has no aarch64 wheel at the time of testing.
 
-À surveiller — la situation peut évoluer si NVIDIA publie un wheel ARM officiel.
-
----
-
-## Stratégie production actuelle
-
-```
-Décision critique (identification d'humain) → GPT-4o
-   └─ acceptable car latence < 5s, ponctuel
-
-Scan de routine (toutes les 5s) → GPT-4o (qualité prime ici aussi pour éviter les faux positifs)
-   └─ pourrait basculer Groq si volume devient un facteur
-
-Scan offline / batch → Ollama qwen3-vl local
-   └─ aucun coût marginal, asynchrone
-```
+Worth watching — situation may change if NVIDIA ships an official ARM wheel.
 
 ---
 
-## Filtre de négation regex
+## Current production strategy
 
-**Problème observé sans filtre :** le VLM décrit "Il n'y a pas de personnes visibles" → le matcher naïf trouve le mot "personnes" → faux positif.
+```
+Critical decision (human identification) → GPT-4o
+   └─ acceptable since latency < 5s, intermittent
 
-**Solution :** filtre regex sur 4 patterns de négation FR/EN appliqué après détection des mots-clés humains :
+Routine scan (every 5s) → GPT-4o (quality wins here too, to avoid false positives)
+   └─ may shift to Groq if volume becomes a factor
+
+Offline / batch scan → local Ollama qwen3-vl
+   └─ zero marginal cost, asynchronous
+```
+
+---
+
+## Negation regex filter
+
+**Problem observed without filter:** the VLM describes "There are no visible people" → naive matcher finds the word "people" → false positive.
+
+**Solution:** regex filter on 4 negation patterns (FR/EN), applied after the human-keywords match:
 
 ```python
 NEGATION_PATTERNS = [
@@ -101,13 +101,13 @@ NEGATION_PATTERNS = [
 ]
 ```
 
-**Métrique :** sur 16 scans tests post-filtre, **100% des faux positifs éliminés**. Aucun faux négatif observé (tous les humains réels ont été détectés).
+**Metric:** across 16 post-filter test scans, **100% of false positives eliminated**. No false negatives observed (every real human was detected).
 
 ---
 
-## Leçons apprises
+## Lessons learned
 
-1. **Toujours envoyer un User-Agent** sur les API VLM cloud. Cloudflare bloque sinon.
-2. **La latence VLM impose un design asynchrone.** Le robot ne peut pas attendre 3s pour décider — soit on stoppe pendant le scan, soit on fait du pipeline parallèle.
-3. **Les modèles 3D non photo-réalistes piègent les VLM.** Une sphère bleue représentant un docteur n'est pas reconnue. Solutions : meilleurs assets (Hy3D), ou prompts adaptés contextuellement.
-4. **Le filtre de négation est non-négociable.** Sans lui, ~80% de faux positifs. Avec : 0%.
+1. **Always send a User-Agent** on cloud VLM APIs. Cloudflare blocks otherwise.
+2. **VLM latency forces an asynchronous design.** The robot can't wait 3s to decide — either you stop during the scan, or you run a parallel pipeline.
+3. **Non-photoreal 3D models trip up VLMs.** A blue sphere representing a doctor isn't recognized. Solutions: better assets (Hy3D), or contextually-tuned prompts.
+4. **The negation filter is non-negotiable.** Without it, ~80% false positives. With it: 0%.

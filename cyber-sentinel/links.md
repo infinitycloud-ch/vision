@@ -1,36 +1,37 @@
-# Liens — code, screenshots, documents
+# Links — code, screenshots, documents
 
-> Pour la mise en page sur GitHub Pages ou pour integration dans le repo principal GitHub Vision.
-
----
-
-## Documents de reference (dans le repo CyberDefense)
-
-| Lien interne | Description |
-|--------------|-------------|
-| `docs/prd.md` | Product Requirements Document complet |
-| `docs/masterplan-phase0.md` | Plan de la Phase 0 — recherche & etat de l'art |
-| `docs/research-phase0-axes1-2.md` | Rapport de synthese : 10 outils + 16 APIs |
-| `docs/competitive-analysis-edr.md` | Analyse detaillee CrowdStrike, SentinelOne, Defender |
-| `docs/threat-intel-apis-research.md` | Inventaire detaille des 16 sources de threat intelligence |
-| `docs/sentinel-vue-densemble.html` | Document HTML pedagogique pour audience non-technique |
-| `docs/vpn-architecture.md` | Architecture du module VPN |
-| `docs/vpn-api-spec.md` | Specifications de l'API HTTPS du module VPN |
-| `docs/linkedin-article.md` | Article LinkedIn 30 avril 2026 |
+> For GitHub Pages layout or for integration into the main GitHub Vision repo.
 
 ---
 
-## Code livre (dans le repo CyberDefense)
+## Reference documents (in the CyberDefense repo)
 
-### Module VPN — `vpn-module/`
+| Internal link | Description |
+|---------------|-------------|
+| `docs/prd.md` | Complete Product Requirements Document |
+| `docs/masterplan-phase0.md` | Phase 0 plan — research & state of the art |
+| `docs/research-phase0-axes1-2.md` | Synthesis report: 10 tools + 16 APIs |
+| `docs/competitive-analysis-edr.md` | Detailed analysis of CrowdStrike, SentinelOne, Defender |
+| `docs/threat-intel-apis-research.md` | Detailed inventory of 16 threat intelligence sources |
+| `docs/sentinel-vue-densemble.html` | HTML educational document for non-technical audience |
+| `docs/vpn-architecture.md` | VPN module architecture |
+| `docs/vpn-api-spec.md` | VPN HTTPS API specifications |
+| `docs/linkedin-article-en.md` | LinkedIn article (English) |
+| `docs/linkedin-article.md` | LinkedIn article (French) |
+
+---
+
+## Shipped code (in the CyberDefense repo)
+
+### VPN module — `vpn-module/`
 
 ```
 vpn-module/
 ├── api/
 │   ├── src/
 │   │   ├── index.ts          # Bun.serve TLS + middleware chain
-│   │   ├── auth.ts           # Bearer middleware constant-time
-│   │   ├── cors.ts           # CORS strict 3 origines
+│   │   ├── auth.ts           # Bearer middleware, constant-time
+│   │   ├── cors.ts           # Strict CORS, 3 origins
 │   │   ├── routes/
 │   │   │   ├── health.ts     # GET /api/vpn/health (public)
 │   │   │   ├── status.ts     # GET /api/vpn/status (auth)
@@ -38,7 +39,7 @@ vpn-module/
 │   │   │   └── server.ts     # POST /api/vpn/server/restart
 │   │   └── lib/
 │   │       └── exec.ts       # Bun.spawn args[] wrapper
-│   ├── certs/                # TLS self-signed (chmod 600, .gitignore)
+│   ├── certs/                # Self-signed TLS (chmod 600, .gitignore)
 │   ├── logs/                 # api.{out,err} + audit.log
 │   ├── .env.example
 │   └── package.json
@@ -68,66 +69,66 @@ vpn-module/
 │   └── test-server-up.sh     # 11 health checks
 ├── docs/
 │   ├── README.md
-│   └── procedures.md         # 270 lignes
+│   └── procedures.md         # 270 lines
 ├── keys/                     # server pub/priv + clients/ (chmod 700)
 └── .gitignore
 ```
 
-### POC Phase 0 — `CyberDefense APP/poc-axe4/`
+### Phase 0 POC — `CyberDefense APP/poc-axe4/`
 
 ```
 poc-axe4/
 ├── results/
 │   ├── benchmark-report.md
-│   ├── benchmark-events.json   # 100 events de test
+│   ├── benchmark-events.json   # 100 test events
 │   ├── metrics.json
 │   ├── results-haiku-4.json    # 110 KB
 │   └── results-sonnet-4.json   # 173 KB
 ├── src/
-│   ├── generator.ts            # Genere 100 events
-│   ├── benchmark.ts            # Roule les events sur les modeles
-│   └── prompts/                # Templates prompt LLM
+│   ├── generator.ts            # Generates 100 events
+│   ├── benchmark.ts            # Runs events through models
+│   └── prompts/                # LLM prompt templates
 └── package.json
 ```
 
 ---
 
-## Captures d'ecran a integrer
+## Screenshots to integrate
 
-### Article LinkedIn — visuels recommandes
-
-| # | Image | Description |
-|---|-------|-------------|
-| 1 | Le diagramme des 3 couches | Capture de la section Architecture du document HTML, fond sombre, jaune accent |
-| 2 | Le tableau de comparaison | Capture du tableau "Programme standard vs Sentinel" avec les 8 criteres |
-| 3 | Le scenario kito RAT | Capture de la zone "Verdict Sentinel" avec le raisonnement en pseudo-code |
-| 4 | Stats POC | Les 4 chiffres cles : 100% recall, 97.6% confiance, 2.64s, $1.52/jour |
-
-### GitHub Vision — visuels recommandes
+### LinkedIn article — recommended visuals
 
 | # | Image | Description |
 |---|-------|-------------|
-| 1 | Header vitrine | "CyberDefense / Sentinel" avec le tagline "Detection par raisonnement, pas par signature" |
-| 2 | Architecture 3 couches | Diagramme propre, fond sombre |
-| 3 | Tableau comparatif | Les 8 criteres standard vs Sentinel |
-| 4 | Tableau detection kito | EDR commerciaux ~30-65% vs Sentinel >90% |
-| 5 | Capture API VPN | curl test avec reponse JSON propre |
-| 6 | Liste scripts | Arborescence vpn-module/scripts/ |
+| 1 | The 3-layer diagram | Capture from the Architecture section of the HTML document, dark background, yellow accent |
+| 2 | The comparison table | Capture of the "Standard vs Sentinel" table with the 8 criteria |
+| 3 | The kito RAT scenario | Capture of the "Sentinel verdict" zone with the reasoning in pseudo-code |
+| 4 | POC stats | The 4 key numbers: 100% recall, 97.6% confidence, 2.64s, $1.52/day |
+
+### GitHub Vision — recommended visuals
+
+| # | Image | Description |
+|---|-------|-------------|
+| 1 | Showcase header | "CyberDefense / Sentinel" with the tagline "Detection by reasoning, not by signature" |
+| 2 | 3-layer architecture | Clean diagram, dark background |
+| 3 | Comparison table | The 8 standard vs Sentinel criteria |
+| 4 | Kito detection table | Commercial EDRs ~30-65% vs Sentinel >90% |
+| 5 | VPN API capture | curl test with clean JSON response |
+| 6 | Scripts list | Tree view of `vpn-module/scripts/` |
 
 ---
 
-## Acces public
+## Public access
 
-Le code et les rapports techniques seront ouverts au fur et a mesure de la livraison. La strategie de publication :
+Code and technical reports will be opened progressively as they ship. Publication strategy:
 
-- **Phase 0** (recherche + POC) : rapports markdown publics maintenant ; code POC public sur GitHub
-- **Module VPN** : code public sur GitHub apres validation finale (prevue cette semaine)
-- **Phase 1** (daemon + Cortex) : code public au fur et a mesure des sprints
+- **Phase 0** (research + POC): markdown reports public now; POC code public on GitHub
+- **VPN module**: public code on GitHub after final validation (planned this week)
+- **Phase 1** (daemon + Cortex): public code as sprints ship
 
-Licence prevue : Apache 2.0 pour le code, CC-BY-SA 4.0 pour la documentation.
+Planned license: Apache 2.0 for code, CC-BY-SA 4.0 for documentation.
 
 ---
 
 ## Contact
 
-Le projet est mene en parallele d'autres initiatives de la ferme InfinityCloud. Les retours techniques (architecture, choix des LLM, threat intel sources, methodologie agentique) sont tres bienvenus — directement sur le repo, ou via les canaux LinkedIn habituels.
+The project runs in parallel with other InfinityCloud farm initiatives. Technical feedback (architecture, LLM choices, threat intel sources, agentic methodology) is very welcome — directly on the repo, or via the usual LinkedIn channels.

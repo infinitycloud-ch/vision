@@ -1,99 +1,99 @@
-# Chronologie — 6 jours, 32 livrables
+# Timeline — 6 days, 32 deliverables
 
-> Tracé brut, extrait des events Kanban du projet ICBI (project_id 56 sur le portail interne).
+> Raw trace, pulled from Kanban events on the ICBI project (project_id 56 on the internal portal).
 
 ---
 
-## Sprint 1 — MVP NL→SQL (≈ 2 h 44, 13 livrables)
+## Sprint 1 — NL→SQL MVP (≈ 2 h 44, 13 deliverables)
 
-**Goal** : ingestion AWS pricing CSV dans DuckDB, API REST `/api/icbi/*`, NL→SQL via LLM, interface web minimale.
+**Goal**: ingest the AWS pricing CSV into DuckDB, REST API `/api/icbi/*`, NL→SQL via LLM, minimal web interface.
 
-| Tâche | Livré |
+| Task | Shipped |
 |-------|-------|
-| 2741 | Setup deps + structure `src/backend/icbi/` |
+| 2741 | Setup deps + `src/backend/icbi/` structure |
 | 2742 | `duckdb.ts` singleton + healthcheck |
 | 2743 | `ingest.ts` — 440K rows × 94 cols / 3.7 s |
 | 2744 | `profiler.ts` SUMMARIZE — 244 ms / 94 cols |
 | 2745 | `POST /api/icbi/query` |
 | 2746 | `GET /api/icbi/tables` |
 | 2747 | `GET /api/icbi/profile/:table` |
-| 2748 | Vues matérialisées `vw_ec2` (439 795) + `vw_bedrock` (92) |
-| 2749 | NL→SQL chain (initialement Gemini, swapped vers OpenAI mid-sprint) |
-| 2750 | `POST /api/icbi/ask` (graceful 503 + fallback EXPLAIN-validated) |
+| 2748 | Materialized views `vw_ec2` (439,795) + `vw_bedrock` (92) |
+| 2749 | NL→SQL chain (initially Gemini, swapped to OpenAI mid-sprint) |
+| 2750 | `POST /api/icbi/ask` (graceful 503 + EXPLAIN-validated fallback) |
 | 2751 | Frontend `IcbiView.vue` cyberpunk #d4a437 |
 | 2752 | Prisma `IcbiQueryHistory` + `GET /history` |
-| 2753 | Test E2E + screenshot UI live |
+| 2753 | E2E test + live UI screenshot |
 
-**Pivots Sprint 1** :
+**Sprint 1 pivots**:
 
-- Architecture : standalone (ports 3500/3501) → module intégré au portail.
-- LLM : Gemini → OpenAI suite à révocation clé pour leak (incident sécurité, six clés hardcodées nettoyées dans la foulée).
+- Architecture: standalone (ports 3500/3501) → module integrated into the portal.
+- LLM: Gemini → OpenAI after a key was revoked for a leak (security incident, six hardcoded keys cleaned up in the same pass).
 
 ---
 
-## Sprint 2 — Framework agnostique + wow factor (≈ 3 h, 16 livrables)
+## Sprint 2 — Agnostic framework + wow factor (≈ 3 h, 16 deliverables)
 
-| Phase | Tâches | Livré |
+| Phase | Tasks | Shipped |
 |-------|--------|-------|
-| A — Socle agnostique | 2754–2757 | Profils CRUD, switch, reset, robustesse SQL, migration sha256-verified Sprint1→S2 |
-| B — Design Apple × Ive | 2758–2759 | Refonte CSS variables, palette light/dark, animations cubic-bezier Apple, theme cycle |
-| C — Viz futuriste | 2760–2762 | `PlotView` (Observable Plot, auto-detect chart type), `GlobeView` orthographic, `StoryView` narrative |
-| D — Intelligence | 2763–2765 | `enrichSemantic`, `getSuggestions` cache 30 min, `multiAsk` decomposeQuestion |
-| E — 2ème dataset | 2766 | World Bank GDP (13 979 rows / 264 pays / 1960-2022) |
-| F — Multimodal mini | 2767 | 10 docs unifiés CSV (5 emails + 3 PDF + 2 images), cross-search SQL FTS |
-| G — Keynote mode | 2768–2769 | `vocal-query` partial (hook backend), mode présentation fullscreen |
+| A — Agnostic foundation | 2754–2757 | Profiles CRUD, switch, reset, SQL robustness, sha256-verified Sprint1→S2 migration |
+| B — Apple × Ive design | 2758–2759 | CSS variables refactor, light/dark palette, Apple cubic-bezier animations, theme cycle |
+| C — Futuristic viz | 2760–2762 | `PlotView` (Observable Plot, auto-detect chart type), orthographic `GlobeView`, narrative `StoryView` |
+| D — Intelligence | 2763–2765 | `enrichSemantic`, `getSuggestions` 30 min cache, `multiAsk` decomposeQuestion |
+| E — 2nd dataset | 2766 | World Bank GDP (13,979 rows / 264 countries / 1960-2022) |
+| F — Multimodal mini | 2767 | 10 unified CSV docs (5 emails + 3 PDFs + 2 images), SQL FTS cross-search |
+| G — Keynote mode | 2768–2769 | `vocal-query` partial (backend hook), fullscreen presentation mode |
 
-**Sortie** : 10 screenshots Puppeteer headless capturés en 30 s, totalement autonomes (sans présence humaine).
-
----
-
-## Sprint 2.6 — Correctif (≈ 1 h 30, 2 fix)
-
-- **Bug SQL type-aware** : LLM générait `WHERE col != ''` sur colonne `DOUBLE` → DuckDB `Conversion Error`. Fix : section `TYPE-AWARE FILTERING` dans `prompt.ts` avec quatre patterns (DOUBLE, VARCHAR, BOOLEAN, DATE) + four few-shots type-correct. Régression 4/4 PASS.
-- **Bug UX fullwidth** : `result-card` plafonné à 720 px sur grand écran. Fix : layout dual-mode `is-empty` (880 px centré ergonomique) / `has-result` (1800 px fullwidth). Préserve typing AskBox ergonomique.
+**Output**: 10 headless Puppeteer screenshots captured in 30 s, fully autonomous (no human present).
 
 ---
 
-## Sprint 2.7 — Démo auto-play (≈ 3 h)
+## Sprint 2.6 — Hotfix (≈ 1 h 30, 2 fixes)
 
-- `DemoPlayer.vue` state machine 7 états (idle → typing → submitting → showing → between → paused → done).
-- Typing effect 30-90 ms / char jitter humain.
-- TTS Web Speech API fr-FR (Amélie / Thomas / Virginie auto-detect).
-- Sequences par profil dans `data/icbi/profiles/{slug}/demo-sequence.json`.
-- Overlay Apple Keynote `backdrop-filter: blur(20px) saturate(180%)`, mini-timeline dots pulse.
-- Focus blur `.icbi.demo-active` sur chrome (header / footer / hint-row opacity 0.18 + blur).
-
-**Bug intermédiaire** : state machine bloquée à idle. Cause `defineAsyncComponent + Suspense v-if` → `watch` sans `immediate: true`. Fix STRAT fallback (DEV bloqué Anthropic 2000px) — une ligne, frontend rebuilt, validation 4 screenshots Puppeteer dsf=1.
+- **Type-aware SQL bug**: LLM was generating `WHERE col != ''` on a `DOUBLE` column → DuckDB `Conversion Error`. Fix: `TYPE-AWARE FILTERING` section in `prompt.ts` with four patterns (DOUBLE, VARCHAR, BOOLEAN, DATE) + four type-correct few-shots. Regression 4/4 PASS.
+- **Fullwidth UX bug**: `result-card` capped at 720 px on large screens. Fix: dual-mode layout `is-empty` (880 px ergonomic centered) / `has-result` (1800 px fullwidth). Preserves the ergonomic AskBox typing experience.
 
 ---
 
-## Sprint 2.8 Wave 1 — Néo-Cyberpunk Épuré (≈ 1 h 30, STRAT fallback)
+## Sprint 2.7 — Auto-play demo (≈ 3 h)
 
-Concept artistique : **squelette Apple × Jony Ive + soul cyberpunk**. Inspirations : Bladerunner 2049 + Linear.app dark + Apple Vision Pro.
+- `DemoPlayer.vue` 7-state machine (idle → typing → submitting → showing → between → paused → done).
+- Typing effect 30-90 ms / char with human jitter.
+- Web Speech API TTS fr-FR (Amélie / Thomas / Virginie auto-detect).
+- Per-profile sequences in `data/icbi/profiles/{slug}/demo-sequence.json`.
+- Apple Keynote overlay `backdrop-filter: blur(20px) saturate(180%)`, mini-timeline pulse dots.
+- Focus blur `.icbi.demo-active` on chrome (header / footer / hint-row opacity 0.18 + blur).
+
+**Intermediate bug**: state machine stuck at idle. Cause: `defineAsyncComponent + Suspense v-if` → `watch` without `immediate: true`. STRAT fallback fix (DEV stuck on Anthropic 2000px) — one line, frontend rebuilt, validation via 4 Puppeteer dsf=1 screenshots.
+
+---
+
+## Sprint 2.8 Wave 1 — Stripped-down Neo-Cyberpunk (≈ 1 h 30, STRAT fallback)
+
+Artistic concept: **Apple × Jony Ive skeleton + cyberpunk soul**. Inspirations: Bladerunner 2049 + Linear.app dark + Apple Vision Pro.
 
 - Palette `--accent #d4a437` + `--accent-bright #FFE873` + `--accent-glow rgba(212,164,55,0.25-0.65)`.
-- Dark vrai noir `#000000` + `--bg-secondary #0A0A0A` + `--bg-tertiary #141414`.
-- AskBox focus glow expressive (ring `0 0 0 4px` + diffuse `0 0 32px`).
-- Submit + Demo buttons : `bg jaune + color #0A0A0A + hover bright + glow ring 6px`.
-- Result-card : scan-line sweep `0.9 s` au mount via `::before` linear-gradient transparent → `accent-glow-strong` → transparent.
-- Globe : graticule jaune `rgba(212, 164, 55, 0.18)`, sphere fill vrai noir, dots multi-layer (halo opacity 0.10 outer + mid 0.22 + core `accent-bright` 0.95).
+- True black dark `#000000` + `--bg-secondary #0A0A0A` + `--bg-tertiary #141414`.
+- AskBox expressive focus glow (ring `0 0 0 4px` + diffuse `0 0 32px`).
+- Submit + Demo buttons: `bg yellow + color #0A0A0A + hover bright + glow ring 6px`.
+- Result-card: scan-line sweep `0.9 s` on mount via `::before` linear-gradient transparent → `accent-glow-strong` → transparent.
+- Globe: yellow graticule `rgba(212, 164, 55, 0.18)`, true black sphere fill, multi-layer dots (halo opacity 0.10 outer + mid 0.22 + core `accent-bright` 0.95).
 - Scorecard 96 px ultralight `color: var(--accent)` + `text-shadow 0 0 32px var(--accent-glow)`.
 
-7 screenshots Puppeteer dsf=1 (frames 20-26) validés visuellement.
+7 Puppeteer dsf=1 screenshots (frames 20-26) visually validated.
 
-**Restraint 70 % vide / 25 % structure / 5 % accent** appliqué scrupuleusement.
+**70 % empty / 25 % structure / 5 % accent restraint** applied scrupulously.
 
 ---
 
-## Cumul
+## Totals
 
 | | |
 |--|--|
-| Livrables totaux | **32** |
-| Pivots majeurs absorbés | **3** (architecture, LLM, design) |
-| Incidents sécurité résolus | **1** (clé Gemini leak, six hardcodées nettoyées) |
-| Incidents techniques résolus | **2** (Vue 3 lifecycle, Anthropic 2000px) |
-| Datasets validés | **4** (AWS, employés, World Bank, multimodal) |
-| Endpoints API ICBI | **15** |
-| Screenshots Puppeteer autonomes | **27** |
-| Durée cumulée | **≈ 14 h sur 6 jours** (avec mode AGI nocturne) |
+| Total deliverables | **32** |
+| Major pivots absorbed | **3** (architecture, LLM, design) |
+| Security incidents resolved | **1** (Gemini key leak, six hardcoded ones cleaned up) |
+| Technical incidents resolved | **2** (Vue 3 lifecycle, Anthropic 2000px) |
+| Datasets validated | **4** (AWS, employees, World Bank, multimodal) |
+| ICBI API endpoints | **15** |
+| Autonomous Puppeteer screenshots | **27** |
+| Cumulative duration | **≈ 14 h over 6 days** (with nighttime AGI mode) |
