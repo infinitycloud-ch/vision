@@ -14,7 +14,7 @@
 
 ## Context
 
-Solo builder. Twenty years of program management at scale (Pernod Ricard, ICRC). Reconverted to AI in 2023. Founded Infinity Cloud Sàrl in Switzerland in 2024.
+Solo builder. Twenty years of program management at scale (Pernod Ricard, ICRC). Stepped back from corporate roles in 2023 to pursue causes that matter — education, robotics, and AI. A privilege I take seriously. Founded Infinity Cloud Sàrl in Switzerland in 2024.
 
 Hardware footprint: a personal NVIDIA DGX Spark (Grace-Blackwell GB10, 128 GB unified memory, 100 W TDP) under the desk, paired with a Mac M3 Ultra. No cloud rental, no rented GPUs. Every workload runs on hardware I own.
 
