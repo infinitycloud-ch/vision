@@ -1,6 +1,6 @@
 # Field notes: orchestrating multiple Claude agents on a BI product
 
-Six days. A local-first, agnostic BI product that turns a French question into DuckDB SQL and renders the result in a polished UI. **32 deliverables, 3 major pivots, 2 technical incidents handled without breaking the pipeline.** Not a sales pitch — I'm writing this down because the method surprised me.
+Two days. A local-first, agnostic BI product that turns a French question into DuckDB SQL and renders the result in a polished UI. **32 deliverables, 3 major pivots, 2 technical incidents handled without breaking the pipeline — full agentic execution from a structured PRD with pre-defined workflows.** Not a sales pitch — I'm writing this down because the method surprised me.
 
 The product is called **ICBI** (Infinity Cloud Business Intelligence). It runs as an embedded module inside a Bun + Vue 3 portal, ingests any CSV, generates its own semantic-layer YAML through an LLM, answers natural-language questions via OpenAI gpt-4.1-mini, and ships charts, a 3D globe, and an Apple-Keynote-style presentation mode. Four datasets validated so far: AWS pricing (440K rows × 94 columns), European employees, World Bank GDP (1960-2022), and a small multimodal mix (emails + PDFs + images).
 

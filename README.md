@@ -34,7 +34,7 @@ Quadruped robotics infrastructure (Unitree Go2 + NVIDIA Isaac Sim 5.1 + ROS2 Jaz
 
 ### 2. [Agentic ICBI](./agentic-icbi/) — `Orchestrating multiple Claude agents for production-grade BI`
 
-Local-first business intelligence: CSV ingestion → DuckDB profiling → LLM-generated semantic layer (YAML) → natural-language-to-SQL with type-aware constraints → adaptive visualization (bar / line / scatter / heatmap / scorecard / orthographic globe). The `SYNAPSE/ADN/cipher` pattern compresses agent memory across sessions. 32 deliverables in 6 days, three architectural pivots absorbed. 440K rows × 94 columns profiled in 3.7 seconds on local hardware. No cloud, no vendor lock-in.
+Local-first business intelligence: CSV ingestion → DuckDB profiling → LLM-generated semantic layer (YAML) → natural-language-to-SQL with type-aware constraints → adaptive visualization (bar / line / scatter / heatmap / scorecard / orthographic globe). The `SYNAPSE/ADN/cipher` pattern compresses agent memory across sessions. 32 deliverables in 2 days via full agentic execution from a structured PRD with pre-defined workflows, three architectural pivots absorbed. 440K rows × 94 columns profiled in 3.7 seconds on local hardware. No cloud, no vendor lock-in.
 
 [Read the LinkedIn article →](./agentic-icbi/docs/linkedin-article.md) · [Watch the demo (28 s) →](./agentic-icbi/media/demo-icbi.mp4) · Same agentic stack as [Robotics](./robotics/)
 

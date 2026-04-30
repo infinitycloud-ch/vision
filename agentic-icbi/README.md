@@ -6,7 +6,7 @@
 
 **Stack** — Bun · DuckDB v1.5.2 · OpenAI gpt-4.1-mini · Vue 3 · Observable Plot · TypeScript
 
-**Status** — Sprint 1 (13/13) + Sprint 2 (16/16) + Sprint 2.6 (2 fixes) + Sprint 2.7 (demo mode) + Sprint 2.8 Wave 1 (Néo-Cyberpunk Épuré design) — **32 deliverables in 6 days**, 3 major pivots absorbed.
+**Status** — Sprint 1 (13/13) + Sprint 2 (16/16) + Sprint 2.6 (2 fixes) + Sprint 2.7 (demo mode) + Sprint 2.8 Wave 1 (Néo-Cyberpunk Épuré design) — **32 deliverables in 2 days**, 3 major pivots absorbed. Full agentic execution from a structured PRD with pre-defined workflows.
 
 ---
 

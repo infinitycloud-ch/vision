@@ -1,6 +1,6 @@
-# Timeline — 6 days, 32 deliverables
+# Timeline — 2 days, 32 deliverables
 
-> Raw trace, pulled from Kanban events on the ICBI project (project_id 56 on the internal portal).
+> Raw trace, pulled from Kanban events on the ICBI project (project_id 56 on the internal portal). Full agentic execution starting from a structured PRD with pre-defined workflows — what follows is sprint logic, not calendar pacing.
 
 ---
 
@@ -96,4 +96,4 @@ Artistic concept: **Apple × Jony Ive skeleton + cyberpunk soul**. Inspirations:
 | Datasets validated | **4** (AWS, employees, World Bank, multimodal) |
 | ICBI API endpoints | **15** |
 | Autonomous Puppeteer screenshots | **27** |
-| Cumulative duration | **≈ 14 h over 6 days** (with nighttime AGI mode) |
+| Cumulative duration | **≈ 14 h over 2 days** (full AGI mode, including nighttime runs) |
