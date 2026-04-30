@@ -14,15 +14,17 @@ Hardware footprint: a personal NVIDIA DGX Spark (Grace-Blackwell GB10, 128 GB un
 
 Method: an "agentic farm" of specialized AI agents (STRAT/DEV pairs) coordinated through tmux sessions and structured protocols. Each project gets its own agent team. Sprints are short, deliverables are real, validation is QA-driven. The IEEE-format paper *PrivExpensIA: Observational Study of a Multi-Agent Orchestration Framework* (September 2025) documents the approach.
 
+The orchestration backbone is [**MonoCLI**](https://github.com/infinitycloud-ch/monocli) — a Python CLI built specifically because no tool existed to give AI agents a persistent, evolving brain. SQLite knowledge base, YAML Playbooks for structured missions, Jedi Rank certification system, Scribe for continuous learning across sessions. 99.8% test pass rate. The same brain that drives the robotics platform also coordinates the project teams.
+
 ---
 
 ## The three projects
 
 ### 1. [Robotics](./robotics/) — Cognitive robotics from a desk
 
-Building a quadruped robotic infrastructure (Unitree Go2 + NVIDIA Isaac Sim + ROS2 Jazzy + RL PPO locomotion) on the GB10 Blackwell. Three-layer architecture: Brain (LLM-driven planning) → Interface (RobotAdapter, sim/real agnostic) → World (Isaac Sim + OmniGraph). Cognitive evolution is measured across runs: −6.7% trajectory distance after knowledge distillation, +17.5% resilience to perturbation.
+Quadruped robotics infrastructure (Unitree Go2 + NVIDIA Isaac Sim 5.1 + ROS2 Jazzy + RL PPO locomotion) running on the GB10 Blackwell. Three-layer architecture: Brain (MonoCLI + LLM planning) → Interface (RobotAdapter, sim/real agnostic) → World (Isaac Sim + OmniGraph). Sim-to-real transfer validated on the physical Go2 (videos in [`robotics/media/`](./robotics/media/)). Sprint 18 ran in fully autonomous mode and proved a complete genetic loop: −18.4% time, −11.8% distance, −17.6% cycles after one round of knowledge distillation. Custom X1 telemetry dashboard for real-time pilot view. Hy3D → Isaac Sim asset pipeline. GR00T N1.7 inference validated on Unitree G1.
 
-[Read the LinkedIn article →](./robotics/docs/linkedin-article.md)
+[Read the LinkedIn article →](./robotics/docs/linkedin-article.md) · [See the dashboard, the farm, the robot →](./robotics/)
 
 ### 2. [Agentic ICBI](./agentic-icbi/) — Local-first business intelligence
 
@@ -66,7 +68,7 @@ vision/
 │   ├── research/
 │   │   ├── vlm_benchmark.md        # Vision-language model comparison
 │   │   └── compatibility.md        # Stack compatibility notes
-│   └── media/                      # Isaac Sim viewer screenshots
+│   └── media/                      # X1 dashboard, multi-agent farm, Go2 real-condition videos, Isaac Sim
 ├── agentic-icbi/
 │   ├── README.md
 │   ├── docs/
