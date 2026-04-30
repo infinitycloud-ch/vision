@@ -19,7 +19,7 @@
 
 ## The story
 
-One person, in Switzerland, who spent fifteen years running industrial programs (Pernod Ricard, ICRC), pivoted to AI after an autoimmune diagnosis in 2023, founded Infinity Cloud Sàrl in 2024, and in 2025 placed a **NVIDIA DGX Spark (Grace-Blackwell GB10, 128 GB unified memory, 100 W TDP)** on his desk.
+One person, in Switzerland, who spent fifteen years running industrial programs (Pernod Ricard, ICRC), pivoted to AI in 2023, founded Infinity Cloud Sàrl in 2024, and in 2025 placed a **NVIDIA DGX Spark (Grace-Blackwell GB10, 128 GB unified memory, 100 W TDP)** on his desk.
 
 No cloud cluster. No team of twelve engineers. No board-driven roadmap.
 
